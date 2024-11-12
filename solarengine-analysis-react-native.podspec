@@ -38,7 +38,11 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm}"
 
-  s.dependency  "SolarEngineSDKiOSInter",'~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
+  #global
+  # s.dependency  "SolarEngineSDKiOSInter",'~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
+  #china
+  s.dependency  "SolarEngineSDK",'~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
+  
   if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
     s.dependency  "SESDKRemoteConfig", '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
   end
