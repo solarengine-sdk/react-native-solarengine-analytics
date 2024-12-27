@@ -9,9 +9,11 @@ More about SolarEngine: (https://www.solar-engine.com/en)
 ## Installation
 
 ```sh
-npm install solarengine-analysis-react-native
-//or use the plugin for China
-npm install solarengine-analysis-react-native-cn
+//Regions outside Mainland China
+//npm install solarengine-analysis-react-native
+
+//For Mainland China
+//npm install solarengine-analysis-react-native-cn
 
 ```
 
