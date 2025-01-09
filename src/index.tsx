@@ -12,7 +12,7 @@ import type { SolarEngineInitiateOptions,
   requestTrackingAuthorizationCompletion,
   DeepLinkInfo,
   DelayDeepLinkInfo,
-
+  CustomDomain
   } from './se_initial_config';
 
 import { RemoteConfigMergeType,
@@ -250,7 +250,8 @@ export function initialize(appKey:string,options:SolarEngineInitiateOptions,comp
     SolarengineAnalysis.initialize(
       appKey,
       options.config,
-      options.remoteConfig
+      options.remoteConfig,
+      options.customDomain
     );   
 }
 
@@ -607,7 +608,7 @@ export  type {
   InitiateCompletionInfo,
   DeepLinkInfo,
   DelayDeepLinkInfo,
-
+  CustomDomain,
   SEAdImpressionEventAttribute,
   SEAdClickEventAttribute,
   SEIAPEventAttribute,

@@ -28,6 +28,8 @@ import com.reyun.solar.engine.infos.SEOrderEventModel
 import com.reyun.solar.engine.infos.SEPurchaseEventModel
 import com.reyun.solar.engine.infos.SERegisterEventModel
 import com.reyun.solar.engine.tracker.SEUserDeleteType
+import com.reyun.solar.engine.config.CustomDomain
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.reflect.Method
@@ -204,7 +206,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     singleton.initiateComplete = initiateComplete
   }
   @ReactMethod
-  fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?) {
+  fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
 
     log("appKey: $appKey","initialize")
 
@@ -232,7 +234,41 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableUserData = androidConfigs.getBoolean("enableUserData")
       seConfig.adUserDataEnabled(enableUserData)
     }
+/*
+ts model keys:
+  enable: boolean;
+  receiverDomain: string;
+  ruleDomain?:string;
+  receiverTcpHost?:string;
+  ruleTcpHost?:string;
+  gatewayTcpHost?:string;
+*/
+    if (customDomainMap?.hasKey("enabled") == true) {
 
+        val customDomain = CustomDomain()
+        customDomain.enable = true // 开启私有化部署
+        if(customDomainMap.hasKey("receiverDomain")){
+            val receiverDomain = customDomainMap.getString("receiverDomain")
+            customDomain.receiverDomain = receiverDomain
+        }
+        if(customDomainMap.hasKey("ruleDomain")){
+            val ruleDomain = customDomainMap.getString("ruleDomain")
+            customDomain.ruleDomain = ruleDomain
+        }
+        if(customDomainMap.hasKey("receiverTcpHost")){
+            val receiverTcpHost = customDomainMap.getString("receiverTcpHost")
+            customDomain.tcpReceiverHost = receiverTcpHost
+        }
+        if(customDomainMap.hasKey("ruleTcpHost")){
+            val ruleTcpHost = customDomainMap.getString("ruleTcpHost")
+            customDomain.tcpRuleHost = ruleTcpHost
+        }
+        if(customDomainMap.hasKey("gatewayTcpHost")){
+            val gatewayTcpHost = customDomainMap.getString("gatewayTcpHost")
+            customDomain.tcpGatewayHost = gatewayTcpHost
+        }
+        seConfig.withCustomDomain(customDomain)
+    }
 
     if (remoteConfigMap?.hasKey("enabled") == true) {
       val remote = RemoteConfig()

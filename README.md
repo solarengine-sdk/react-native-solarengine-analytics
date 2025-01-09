@@ -1,12 +1,20 @@
 # solarengine-analysis-react-native
 
 SolarEngine sdk plugin for ReactNative
-More about SolarEngine: (https://www.solar-engine.com/cn/)
+
+SolarEngine ReactNative Plugin (https://help.solar-engine.com/en/docs/Quick-Integration-yk3V)
+
+More about SolarEngine: (https://www.solar-engine.com/en)
 
 ## Installation
 
 ```sh
-npm install solarengine-analysis-react-native
+//Regions outside Mainland China
+//npm install solarengine-analysis-react-native
+
+//For Mainland China
+//npm install solarengine-analysis-react-native-cn
+
 ```
 
 ## Usage

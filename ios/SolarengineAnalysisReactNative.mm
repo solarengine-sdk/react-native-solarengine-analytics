@@ -213,6 +213,7 @@ RCT_EXPORT_METHOD(registerInitiateComplete:(RCTResponseSenderBlock)initiateCompl
 RCT_EXPORT_METHOD(initialize:(NSString *)appKey
                 config:(NSDictionary *)config
                 remoteConfig:(NSDictionary *)remoteConfig
+                customDomain:(NSDictionary *)customDomain
                 )
 {
     [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
@@ -236,6 +237,37 @@ RCT_EXPORT_METHOD(initialize:(NSString *)appKey
   ;
 #endif
   
+/*
+ts model keys:
+  enable: boolean;
+  receiverDomain: string;
+  ruleDomain?:string;
+  receiverTcpHost?:string;
+  ruleTcpHost?:string;
+  gatewayTcpHost?:string;
+*/  
+  if (customDomain && customDomain[@"enabled"]){
+      SECustomDomain *model = [[SECustomDomain alloc] init];
+      BOOL enabled = [customDomain[@"enabled"] boolValue];
+      model.enable = enabled; // 开启私有化部署
+      if ([customDomain objectForKey:@"receiverDomain"]) {
+        model.receiverDomain = customDomain[@"receiverDomain"]; // 您的https 域名
+      }
+      if ([customDomain objectForKey:@"ruleDomain"]) {
+        model.ruleDomain = customDomain[@"ruleDomain"]; // 您的https 域名
+      }
+      if ([customDomain objectForKey:@"receiverTcpHost"]) {
+        model.receiverTcpHost = customDomain[@"receiverTcpHost"]; // 您的https 域名
+      }
+      if ([customDomain objectForKey:@"ruleTcpHost"]) {
+        model.ruleTcpHost = customDomain[@"ruleTcpHost"]; // 您的https 域名
+      }
+      if ([customDomain objectForKey:@"gatewayTcpHost"]) {
+        model.gatewayTcpHost = customDomain[@"gatewayTcpHost"]; // 您的https 域名
+      }
+      seconfig.customDomain = model;
+  }
+
 #if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
 
   if (remoteConfig[@"enabled"]) {
