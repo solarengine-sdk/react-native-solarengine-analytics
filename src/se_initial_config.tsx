@@ -39,6 +39,15 @@ export type se_initial_config = {
   }
 }
 
+declare type CustomDomain = {
+  enabled: boolean;
+  receiverDomain: string;
+  ruleDomain?:string;
+  receiverTcpHost?:string;
+  ruleTcpHost?:string;
+  gatewayTcpHost?:string;
+}
+
 declare type InitiateCompletionInfo = {
   success: boolean;
   errorCode:number|undefined;
@@ -78,6 +87,7 @@ declare type SolarEngineInitiateOptions = {
   attribution?:attribution;
   deeplink?:deeplink;
   delayDeeplink?:delayDeeplink;
+  customDomain?:CustomDomain;
 }
 
 type deeplink = (code:number,deepLinkInfo?:DeepLinkInfo) => void;
@@ -103,6 +113,7 @@ export type {
   requestTrackingAuthorizationCompletion,
   DeepLinkInfo,
   DelayDeepLinkInfo,
+  CustomDomain
 }
 
 

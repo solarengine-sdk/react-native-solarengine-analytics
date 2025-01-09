@@ -11,7 +11,7 @@ import type { RemoteConfig,
   DeepLinkInfo,
   DelayDeepLinkInfo,
   requestTrackingAuthorizationCompletion,
-
+  CustomDomain,
   SEAdImpressionEventAttribute,
   SEAdClickEventAttribute,
   SEIAPEventAttribute,
@@ -333,28 +333,40 @@ function buildDelayDeeplinkResponse():delayDeeplink{
   }
   return handleDelayDeeplink;
 }
+function buildCustomDomain():CustomDomain{
+  let customDomain:CustomDomain = {
+    enabled: true,
+    receiverDomain: "https://your.domain.com",
+    ruleDomain:"https://your.rule_domain.com",
+    receiverTcpHost:"your.tcp.domain.com",
+    ruleTcpHost:"your.tcp.rule.domain.com",
+    gatewayTcpHost:"your.gateway.domain.com"
+  }
+  return customDomain;
+}
 
 async function Initiate(){
   log("Initiate" );
 
   let appKey = "";
   if (Platform.OS === 'ios') {
-     appKey = "07df077973a84ea7";
+     appKey = "place_your_iOSAppkey_here";
   } else if (Platform.OS === 'android') {
-     appKey = "e62fe50b80fc6e5c";
+     appKey = "place_your_AndroidAppkey_here";
   }    
   let config:se_initial_config = buildInitialConfig();
   let remoteConfig:RemoteConfig = buildRemoteConfig();
   let attribution:attribution = buildAttribution();
   let deeplink:deeplink = buildDeeplinkResponse();
   let delayDeeplink:delayDeeplink = buildDelayDeeplinkResponse();
-
+  let customDomain:CustomDomain = buildCustomDomain();
 let initiateOptions:SolarEngineInitiateOptions = {
   config:config,
   remoteConfig:remoteConfig,
   attribution:attribution,
   deeplink:deeplink,
-  delayDeeplink:delayDeeplink
+  delayDeeplink:delayDeeplink,
+  customDomain:customDomain
 }
 SolarEngine.initialize(appKey,initiateOptions,(result:InitiateCompletionInfo) => {
   log("SolarEngine SDK Initiate result: " + JSON.stringify(result));

@@ -5,7 +5,7 @@ folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 
 
 
 
-ENV['SOLARENGINE_IOS_SDK_VERSION'] = '1.2.9.1'
+ENV['SOLARENGINE_IOS_SDK_VERSION'] = ''
 ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] = 'false'
 
 
@@ -14,7 +14,8 @@ if File.exist?(config_path)
   config = JSON.parse(File.read(config_path))
   ios_sdk_version = config['platforms'] && config['platforms']['ios'] && config['platforms']['ios']['sdkVersion']
   disable_remote_config = config['disableRemoteConfig']
-  ENV['SOLARENGINE_IOS_SDK_VERSION'] = ios_sdk_version || '1.2.9.1'
+  # ENV['SOLARENGINE_IOS_SDK_VERSION'] = ios_sdk_version || '1.2.9.1'
+  ENV['SOLARENGINE_IOS_SDK_VERSION'] = ios_sdk_version
   ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] = disable_remote_config ? 'true' : 'false'
 end
 
