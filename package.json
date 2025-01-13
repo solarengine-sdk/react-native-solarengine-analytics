@@ -1,5 +1,5 @@
 {
-  "name": "solarengine-analysis-react-native-cn",
+  "name": "solarengine-analysis-react-native",
   "version": "1.1.0",
   "description": "SolarEngine sdk plugin for reactnative",
   "source": "./src/index.tsx",
