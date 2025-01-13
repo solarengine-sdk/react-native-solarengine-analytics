@@ -3,7 +3,14 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 
+# 定义全局变量
+isMainlandChain = true
 
+# 根据条件设置 podname
+solar_engine_pod_name = "SolarEngineSDKiOSInter"
+if isMainlandChain
+  solar_engine_pod_name = "SolarEngineSDK"
+end
 
 ENV['SOLARENGINE_IOS_SDK_VERSION'] = ''
 ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] = 'false'
@@ -39,10 +46,13 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm}"
 
-  #global
-  # s.dependency  "SolarEngineSDKiOSInter",'~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
-  #china
-  s.dependency  "SolarEngineSDK",'~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
+  # 判断 SOLARENGINE_IOS_SDK_VERSION 是否为空字符串
+  if ENV['SOLARENGINE_IOS_SDK_VERSION'] && !ENV['SOLARENGINE_IOS_SDK_VERSION'].strip.empty?
+    s.dependency solar_engine_pod_name, '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']    
+  else
+    s.dependency solar_engine_pod_name
+  end  
+
   
   if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
     s.dependency  "SESDKRemoteConfig", '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
