@@ -8,15 +8,16 @@ isMainlandChain = false
 
 # 根据条件设置 podname
 solar_engine_pod_name = "SolarEngineSDKiOSInter"
-if isMainlandChain
-  solar_engine_pod_name = "SolarEngineSDK"
-end
+solar_engine_pod_name = isMainlandChain ? "SolarEngineSDK" : "SolarEngineSDKiOSInter"
 
-ENV['SOLARENGINE_IOS_SDK_VERSION'] = ''
-ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] = 'false'
+ENV['RCT_NEW_ARCH_ENABLED'] ||= '0' # 默认禁用新架构
+ENV['SOLARENGINE_IOS_SDK_VERSION'] ||= ''
+ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] ||= 'false'
 
+puts "RCT_NEW_ARCH_ENABLED: #{ENV['RCT_NEW_ARCH_ENABLED']}"
 
-config_path = File.join(__dir__, "../../solarengine-reactnative-config.json")
+# config_path = File.join(__dir__, "../../solarengine-reactnative-config.json")
+config_path = File.expand_path("../../solarengine-reactnative-config.json", __dir__)
 if File.exist?(config_path)
   config = JSON.parse(File.read(config_path))
   ios_sdk_version = config['platforms'] && config['platforms']['ios'] && config['platforms']['ios']['sdkVersion']
@@ -48,15 +49,20 @@ Pod::Spec.new do |s|
 
   # 判断 SOLARENGINE_IOS_SDK_VERSION 是否为空字符串
   if ENV['SOLARENGINE_IOS_SDK_VERSION'] && !ENV['SOLARENGINE_IOS_SDK_VERSION'].strip.empty?
+    puts "SolarEngine iOS sdk version: #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
     s.dependency solar_engine_pod_name, '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']    
+    if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
+      s.dependency  "SESDKRemoteConfig", '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
+    end
   else
+    puts "SolarEngine iOS SDK: using the latest version"
     s.dependency solar_engine_pod_name
+    if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
+      s.dependency  "SESDKRemoteConfig"
+    end
   end  
 
-  
-  if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
-    s.dependency  "SESDKRemoteConfig", '~> ' + ENV['SOLARENGINE_IOS_SDK_VERSION']
-  end
+  puts "SolarEngine DisableRemoteConfig value: #{ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG']}"
 
 
 
