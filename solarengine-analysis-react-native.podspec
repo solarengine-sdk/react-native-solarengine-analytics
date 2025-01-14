@@ -4,7 +4,7 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 
 # 定义全局变量
-isMainlandChain = true
+isMainlandChain = false
 
 # 根据条件设置 podname
 solar_engine_pod_name = "SolarEngineSDKiOSInter"
