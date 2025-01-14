@@ -40,7 +40,7 @@ import { PresetEventType,
    Paypal,
   } from './pre_defined_event'
 
-const SolarEnginePluginVersion = '0.1.0';
+const SolarEnginePluginVersion = '1.4.0';
 
 const LINKING_ERROR =
   `The package 'react-native-solarengine-analysis' doesn't seem to be linked. Make sure: \n\n` +
