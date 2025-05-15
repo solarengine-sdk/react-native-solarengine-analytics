@@ -1,1 +1,15 @@
-{}
+{
+  "ignore_dirs": [
+    ".git",
+    "node_modules",
+    "lib",
+    "build",
+    "dist",
+    "ios/build",
+    "android/build",
+    "android/app/build"
+  ],
+  "fsevents_latency": 0.05,
+  "fsevents_try_resync": true,
+  "settle": 1000
+}

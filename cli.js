@@ -1,9 +1,28 @@
 const { program } = require('commander');
 const fs = require('fs');
+const path = require('path');
 
+// 检测是否在 workspace 模式下使用
+function isWorkspaceMode() {
+  const currentDir = process.cwd();
+  const parentDir = path.dirname(currentDir);
+  
+  // 检查当前目录是否是 example 目录
+  const isExampleDir = fs.existsSync(path.join(currentDir, 'package.json')) && 
+                      JSON.parse(fs.readFileSync(path.join(currentDir, 'package.json'))).name === 'solarengine-analysis-react-native-example';
+  
+  // 检查父目录是否是 SDK 根目录
+  const isSDKRootDir = fs.existsSync(path.join(parentDir, 'SolarengineAnalysisReactNative.podspec'));
+  
+  return isExampleDir && isSDKRootDir;
+}
 
-const defaultConfigPath = './solarengine-reactnative-config.json';
-const android_gradle_properties_filepath = './node_modules/solarengine-analysis-react-native/android/gradle.properties'
+// 根据使用模式选择配置文件路径
+const defaultConfigPath = isWorkspaceMode() 
+  ? path.join(path.dirname(process.cwd()), 'solarengine-reactnative-config.json')  // workspace 模式：生成在 SDK 根目录
+  : path.join(process.cwd(), 'solarengine-reactnative-config.json');               // 正常模式：生成在当前目录
+
+const android_gradle_properties_filepath = path.join(__dirname, 'android', 'gradle.properties');
 
 program
  .command('set-config')
@@ -14,7 +33,9 @@ program
  .option('-e, --enableRemoteConfig', 'Enable RemoteConfig')
 
  .action((options) => {
-
+    console.log(`Running in ${isWorkspaceMode() ? 'workspace' : 'normal'} mode`);
+    console.log(`Config file will be generated at: ${defaultConfigPath}`);
+    
     const configFilePath = defaultConfigPath;
     let config = {};
     if (fs.existsSync(configFilePath)) {

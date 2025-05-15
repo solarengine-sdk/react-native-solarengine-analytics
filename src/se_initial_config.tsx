@@ -4,7 +4,7 @@ export type se_initial_config = {
 
   //Whether to enable Debug mode, the default is not enabled. Before using it, please check XXX.
   enableDebug?: boolean;
-  
+
   //Whether to report events when on a 2G network, the default is not to report.
   enable2G?: boolean;
 
@@ -23,98 +23,98 @@ export type se_initial_config = {
   //If your application is targeted at children under the age of 13, it needs to be marked as a Kids App and set setKidsAppEnabled = true.
   enableKidsApp?: boolean;
 
-  //Whether to enable the delayed Deeplink, the default is NO (closed).
-  enableDelayDeeplink?: boolean;
+  //Whether to enable the deferred Deeplink, the default is NO (closed).
+  enableDeferredDeeplink?: boolean;
 
   /************** Android only, if need *****************/
-  android?:{
+  android?: {
     //If you need to use meta attribution, set the meta appid here.
     metaAppId?: string;
-  }
+  };
 
   /************** iOS only, if need *****************/
-  ios?:{
-      attAuthorizationWaitingInterval?:number;
-      caid?:string;
-  }
-}
+  ios?: {
+    attAuthorizationWaitingInterval?: number;
+    caid?: string;
+  };
+};
 
 declare type CustomDomain = {
   enabled: boolean;
   receiverDomain: string;
-  ruleDomain?:string;
-  receiverTcpHost?:string;
-  ruleTcpHost?:string;
-  gatewayTcpHost?:string;
-}
+  ruleDomain?: string;
+  receiverTcpHost?: string;
+  ruleTcpHost?: string;
+  gatewayTcpHost?: string;
+};
 
 declare type InitiateCompletionInfo = {
   success: boolean;
-  errorCode:number|undefined;
-  message:string|undefined;
-}
-
+  errorCode: number | undefined;
+  message: string | undefined;
+};
 
 declare type DeepLinkInfo = {
-  sedpLink:string;
-  turlId:string;
-  from:string;
-  customParams?:Object
-}
+  sedpLink: string;
+  turlId: string;
+  from: string;
+  customParams?: Object;
+};
 
-declare type DelayDeepLinkInfo = {
-  sedpLink:string;
-  turlId:string;
-  sedpUrlscheme:string;
-}
+declare type DeferredDeepLinkInfo = {
+  sedpLink: string;
+  turlId: string;
+  sedpUrlscheme: string;
+};
 
 export enum RemoteConfigMergeType {
-  User  = 1,
-  Cache = 2
-}  
-declare type RemoteConfig = {
-  enabled:boolean;
-  mergeType?:RemoteConfigMergeType;
-  customIDProperties?:Object;
-  customIDEventProperties?:Object;
-  customIDUserProperties?:Object;
+  User = 1,
+  Cache = 2,
 }
-
+declare type RemoteConfig = {
+  enabled: boolean;
+  mergeType?: RemoteConfigMergeType;
+  customIDProperties?: Object;
+  customIDEventProperties?: Object;
+  customIDUserProperties?: Object;
+};
 
 declare type SolarEngineInitiateOptions = {
-  config?:se_initial_config;
-  remoteConfig?:RemoteConfig;
-  attribution?:attribution;
-  deeplink?:deeplink;
-  delayDeeplink?:delayDeeplink;
-  customDomain?:CustomDomain;
-}
+  config?: se_initial_config;
+  remoteConfig?: RemoteConfig;
+  attribution?: attribution;
+  deeplink?: deeplink;
+  deferredDeeplink?: deferredDeeplink;
+  customDomain?: CustomDomain;
+};
 
-type deeplink = (code:number,deepLinkInfo?:DeepLinkInfo) => void;
-type delayDeeplink = (code:number,delayDeepLinkInfo?:DelayDeepLinkInfo) => void;
-type attribution = (code:number,attribution?:Object) => void;
-type requestTrackingAuthorizationCompletion = (status:ATTrackingManagerAuthorizationStatus) => void;
+type deeplink = (code: number, deepLinkInfo?: DeepLinkInfo) => void;
+type deferredDeeplink = (
+  code: number,
+  deferredDeepLinkInfo?: DeferredDeepLinkInfo
+) => void;
+type attribution = (code: number, attribution?: Object) => void;
+type requestTrackingAuthorizationCompletion = (
+  status: ATTrackingManagerAuthorizationStatus
+) => void;
 
 export enum ATTrackingManagerAuthorizationStatus {
   NotDetermined = 0,
-  Restricted    = 1,
-  Denied        = 2,
-  Authorized    = 3,
-  SystemError  = 999
-}  
+  Restricted = 1,
+  Denied = 2,
+  Authorized = 3,
+  SystemError = 999,
+}
 
-export type { 
+export type {
   SolarEngineInitiateOptions,
   RemoteConfig,
   InitiateCompletionInfo,
   deeplink,
-  delayDeeplink,
+  deferredDeeplink,
   attribution,
   requestTrackingAuthorizationCompletion,
   DeepLinkInfo,
-  DelayDeepLinkInfo,
-  CustomDomain
-}
-
-
-    
+  DeferredDeepLinkInfo,
+  CustomDomain,
+};

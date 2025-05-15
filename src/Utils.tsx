@@ -1,19 +1,19 @@
 import { Platform } from 'react-native';
 
 export function assert(condition: boolean, message: string) {
-    if (!condition) {
-      throw new Error(message);
-    }
+  if (!condition) {
+    throw new Error(message);
   }
+}
 
-export function log(str:string){
-    let platform = "unknown";
-    if (Platform.OS === 'ios') {
-        platform = "iOS";
-      } else if (Platform.OS === 'android') {
-        platform = "Android";
-      }
-    console.log("[SolarEngine ReactNative " + platform + "]: " + str);
+export function log(str: string) {
+  let platform = 'unknown';
+  if (Platform.OS === 'ios') {
+    platform = 'iOS';
+  } else if (Platform.OS === 'android') {
+    platform = 'Android';
+  }
+  console.log('[SolarEngine ReactNative ' + platform + ']: ' + str);
 }
 
 /*
