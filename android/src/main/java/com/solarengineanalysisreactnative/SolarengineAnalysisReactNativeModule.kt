@@ -1,20 +1,23 @@
 package com.solarengineanalysisreactnative
 
+
 import android.net.Uri
 import android.util.Log
+import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.module.annotations.ReactModule
 import com.reyun.solar.engine.DelayDeepLinkCallback
 import com.reyun.solar.engine.OnAttributionListener
 import com.reyun.solar.engine.SeSdkSource
 import com.reyun.solar.engine.SolarEngineConfig
 import com.reyun.solar.engine.SolarEngineManager
+import com.reyun.solar.engine.config.CustomDomain
 import com.reyun.solar.engine.config.RemoteConfig
 import com.reyun.solar.engine.infos.PresetEventType
 import com.reyun.solar.engine.infos.SEAdClickEventModel
@@ -28,15 +31,13 @@ import com.reyun.solar.engine.infos.SEOrderEventModel
 import com.reyun.solar.engine.infos.SEPurchaseEventModel
 import com.reyun.solar.engine.infos.SERegisterEventModel
 import com.reyun.solar.engine.tracker.SEUserDeleteType
-import com.reyun.solar.engine.config.CustomDomain
-
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.reflect.Method
 
-
+@ReactModule(name = SolarengineAnalysisReactNativeModule.NAME)
 class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext) :
-  ReactContextBaseJavaModule(reactContext) {
+  NativeSolarengineAnalysisReactNativeSpec(reactContext) {
 
   override fun getName(): String {
     return NAME
@@ -44,11 +45,16 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
   // Example method
   // See https://reactnative.dev/docs/native-modules-android
+  override fun multiply(a: Double, b: Double): Double {
+    return a * b
+  }
 
   companion object {
-    const val NAME: String = "SolarengineAnalysisReactNative"
+    const val NAME = "SolarengineAnalysisReactNative"
     var isLoggingEnabled: Boolean = false
+
   }
+
 
   private fun log(obj: Any, method: String) {
 
@@ -90,8 +96,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
 
+
   @ReactMethod
-  fun setReactNativeBridgeVersion(pluginVersion: String) {
+  override fun setReactNativeBridgeVersion(pluginVersion: String) {
     val log = "pluginVersion: $pluginVersion"
     log(log,"setReactNativeBridgeVersion")
     val seSdkSource = SeSdkSource()
@@ -100,7 +107,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   }
 
   @ReactMethod
-  fun preInit(appKey: String) {
+  override fun preInit(appKey: String) {
 
     if (appKey.isEmpty()) {
       val message = "appKey can`t be empty"
@@ -114,14 +121,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     SolarEngineManager.getInstance().preInit(context, appKey)
   }
   @ReactMethod
-  fun registerAttribution(attribution: Callback) {
+  override fun registerAttribution(attribution: Callback) {
 
     log("","registerAttribution")
     val singleton = SolarEngineSingleton.getInstance()
     singleton.attribution = attribution
   }
   @ReactMethod
-  fun registerDeeplink(deeplink: Callback) {
+  override fun registerDeeplink(deeplink: Callback) {
     log("","registerDeeplink")
 
     val singleton = SolarEngineSingleton.getInstance()
@@ -158,7 +165,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
   @ReactMethod
-  fun registerDelayDeeplink(delayDeeplink: Callback) {
+  override fun registerDelayDeeplink(delayDeeplink: Callback) {
     log("","registerDelayDeeplink")
 
     val singleton = SolarEngineSingleton.getInstance()
@@ -199,14 +206,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     })
   }
   @ReactMethod
-  fun registerInitiateComplete(initiateComplete: Callback) {
+  override fun registerInitiateComplete(initiateComplete: Callback) {
     log("","registerInitiateComplete")
 
     val singleton = SolarEngineSingleton.getInstance()
     singleton.initiateComplete = initiateComplete
   }
   @ReactMethod
-  fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
+  override fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
 
     log("appKey: $appKey","initialize")
 
@@ -234,40 +241,40 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableUserData = androidConfigs.getBoolean("enableUserData")
       seConfig.adUserDataEnabled(enableUserData)
     }
-/*
-ts model keys:
-  enable: boolean;
-  receiverDomain: string;
-  ruleDomain?:string;
-  receiverTcpHost?:string;
-  ruleTcpHost?:string;
-  gatewayTcpHost?:string;
-*/
+    /*
+    ts model keys:
+      enable: boolean;
+      receiverDomain: string;
+      ruleDomain?:string;
+      receiverTcpHost?:string;
+      ruleTcpHost?:string;
+      gatewayTcpHost?:string;
+    */
     if (customDomainMap?.hasKey("enabled") == true) {
 
-        val customDomain = CustomDomain()
-        customDomain.enable = true // 开启私有化部署
-        if(customDomainMap.hasKey("receiverDomain")){
-            val receiverDomain = customDomainMap.getString("receiverDomain")
-            customDomain.receiverDomain = receiverDomain
-        }
-        if(customDomainMap.hasKey("ruleDomain")){
-            val ruleDomain = customDomainMap.getString("ruleDomain")
-            customDomain.ruleDomain = ruleDomain
-        }
-        if(customDomainMap.hasKey("receiverTcpHost")){
-            val receiverTcpHost = customDomainMap.getString("receiverTcpHost")
-            customDomain.tcpReceiverHost = receiverTcpHost
-        }
-        if(customDomainMap.hasKey("ruleTcpHost")){
-            val ruleTcpHost = customDomainMap.getString("ruleTcpHost")
-            customDomain.tcpRuleHost = ruleTcpHost
-        }
-        if(customDomainMap.hasKey("gatewayTcpHost")){
-            val gatewayTcpHost = customDomainMap.getString("gatewayTcpHost")
-            customDomain.tcpGatewayHost = gatewayTcpHost
-        }
-        seConfig.withCustomDomain(customDomain)
+      val customDomain = CustomDomain()
+      customDomain.enable = true // 开启私有化部署
+      if(customDomainMap.hasKey("receiverDomain")){
+        val receiverDomain = customDomainMap.getString("receiverDomain")
+        customDomain.receiverDomain = receiverDomain
+      }
+      if(customDomainMap.hasKey("ruleDomain")){
+        val ruleDomain = customDomainMap.getString("ruleDomain")
+        customDomain.ruleDomain = ruleDomain
+      }
+      if(customDomainMap.hasKey("receiverTcpHost")){
+        val receiverTcpHost = customDomainMap.getString("receiverTcpHost")
+        customDomain.tcpReceiverHost = receiverTcpHost
+      }
+      if(customDomainMap.hasKey("ruleTcpHost")){
+        val ruleTcpHost = customDomainMap.getString("ruleTcpHost")
+        customDomain.tcpRuleHost = ruleTcpHost
+      }
+      if(customDomainMap.hasKey("gatewayTcpHost")){
+        val gatewayTcpHost = customDomainMap.getString("gatewayTcpHost")
+        customDomain.tcpGatewayHost = gatewayTcpHost
+      }
+      seConfig.withCustomDomain(customDomain)
     }
 
     if (remoteConfigMap?.hasKey("enabled") == true) {
@@ -411,7 +418,7 @@ ts model keys:
   }
   /************** Attribution *****************/
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun retrieveAttribution() :WritableMap?{
+  override fun retrieveAttribution() :WritableMap?{
     val attribution = SolarEngineManager.getInstance().attribution
     log("attribution: $attribution","retrieveAttribution")
 
@@ -427,43 +434,43 @@ ts model keys:
   }
   /************** GDPR *****************/
   @ReactMethod
-  fun setGDPRArea(isGDPR:Boolean){
+  override fun setGDPRArea(isGDPR:Boolean){
     log("isGDPR: $isGDPR","setGDPRArea")
     SolarEngineManager.getInstance().setGDPRArea(isGDPR)
   }
 
   /************** DistinctId *****************/
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun fetchDistinctId() :String{
+  override fun fetchDistinctId() :String{
     val distinctId = SolarEngineManager.getInstance().distinctId
     log("distinctId: $distinctId","fetchDistinctId")
     return distinctId
   }
   /************** VisitorID *****************/
   @ReactMethod
-  fun setVisitorID(visitorID:String){
+  override fun setVisitorID(visitorID:String){
     log("visitorID: $visitorID","setVisitorID")
     SolarEngineManager.getInstance().visitorID = visitorID
   }
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun fetchVisitor() :String{
+  override fun fetchVisitor() :String{
     val visitorID = SolarEngineManager.getInstance().visitorID
     log("fetched visitorID: $visitorID","fetchVisitor")
     return visitorID
   }
   /************** AccountID *****************/
   @ReactMethod
-  fun login(accountID:String){
+  override fun login(accountID:String){
     log("accountID: $accountID","login")
     SolarEngineManager.getInstance().login(accountID)
   }
   @ReactMethod
-  fun logout(){
+  override fun logout(){
     log("","logout")
     SolarEngineManager.getInstance().logout();
   }
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun fetchAccount() :String{
+  override fun fetchAccount() :String{
     val accountID = SolarEngineManager.getInstance().accountID
     log("fetched accountID: $accountID","fetchAccount")
     return accountID
@@ -471,7 +478,7 @@ ts model keys:
 
   /************** SuperProperties *****************/
   @ReactMethod
-  fun setSuperProperties(superProperties:ReadableMap){
+  override fun setSuperProperties(superProperties:ReadableMap){
     log("superProperties: $superProperties","setSuperProperties")
     val context = reactApplicationContext
     val jObject = SolarEngineRNUtils.convertMapToJson(superProperties)
@@ -483,9 +490,9 @@ ts model keys:
       log("key: $key , value: $value","setSuperProperties")
 
       when (value) {
-          is Int -> {
-            SolarEngineManager.getInstance().setSuperProperties(context, key, value)
-          }
+        is Int -> {
+          SolarEngineManager.getInstance().setSuperProperties(context, key, value)
+        }
 
         is Long -> {
           SolarEngineManager.getInstance().setSuperProperties(context,key,value)
@@ -523,13 +530,13 @@ ts model keys:
     }
   }
   @ReactMethod
-  fun unsetSuperProperty(key:String){
+  override fun unsetSuperProperty(key:String){
     log("key: $key","unsetSuperProperty")
     val context = reactApplicationContext
     SolarEngineManager.getInstance().unsetSuperProperty(context,key)
   }
   @ReactMethod
-  fun clearSuperProperties(){
+  override fun clearSuperProperties(){
     log("","clearSuperProperties")
     val context = reactApplicationContext
     SolarEngineManager.getInstance().clearSuperProperties(context)
@@ -537,7 +544,7 @@ ts model keys:
 
   /************** Properties for all Preset event *****************/
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun retrievePresetProperties() :WritableMap?{
+  override fun retrievePresetProperties() :WritableMap?{
     log("","retrievePresetProperties")
 
     val dataResult = SolarEngineManager.getInstance().presetProperties ?: return null
@@ -550,14 +557,23 @@ ts model keys:
   }
   /************** Properties for specified Preset event *****************/
   @ReactMethod
-  fun setPresetProperties(eventType:Int,properties:ReadableMap){
+  override fun setPresetProperties(eventTypeString:String,properties:ReadableMap){
     log("properties: $properties","setPresetProperties")
     var appInstall = false
     var appStart = false
     var appEnd = false
-    if ((eventType and 1) == 1) appInstall = true
-    if ((eventType and 2) == 2) appStart = true
-    if ((eventType and 4) == 4) appEnd = true
+
+    val eventType: Int? = eventTypeString.toIntOrNull()
+
+    if (eventType != null) {
+      if ((eventType and 1) == 1) appInstall = true
+    }
+    if (eventType != null) {
+      if ((eventType and 2) == 2) appStart = true
+    }
+    if (eventType != null) {
+      if ((eventType and 4) == 4) appEnd = true
+    }
 
     val jObject = SolarEngineRNUtils.convertMapToJson(properties)
 
@@ -579,51 +595,51 @@ ts model keys:
 
   /************** Predefined Events *****************/
   @ReactMethod
-  fun trackAdImpressionWithAttributes(adImpressionEventAttribute:ReadableMap){
+  override fun trackAdImpressionWithAttributes(adImpressionEventAttribute:ReadableMap){
     log("adImpressionEventAttribute: $adImpressionEventAttribute","trackAdImpressionWithAttributes")
 
     val attribute:SEAdImpEventModel = SolarEngineEventAttribute.adImpressionEventAttribute(adImpressionEventAttribute)
     SolarEngineManager.getInstance().trackAdImpression(attribute)
   }
   @ReactMethod
-  fun trackAdClickWithAttributes(adClickEventAttribute:ReadableMap){
+  override fun trackAdClickWithAttributes(adClickEventAttribute:ReadableMap){
     log("adClickEventAttribute: $adClickEventAttribute","trackAdClickWithAttributes")
     val attribute: SEAdClickEventModel = SolarEngineEventAttribute.adClickEventAttribute(adClickEventAttribute)
     SolarEngineManager.getInstance().trackAdClick(attribute)
   }
   @ReactMethod
-  fun trackIAPWithAttributes(iapEventAttribute:ReadableMap){
+  override fun trackIAPWithAttributes(iapEventAttribute:ReadableMap){
     log("iapEventAttribute: $iapEventAttribute","trackIAPWithAttributes")
     val attribute: SEPurchaseEventModel = SolarEngineEventAttribute.iapEventAttribute(iapEventAttribute)
     SolarEngineManager.getInstance().trackPurchase(attribute)
   }
   @ReactMethod
-  fun trackAppAttrWithAttributes(appAttrEventAttribute:ReadableMap){
+  override fun trackAppAttrWithAttributes(appAttrEventAttribute:ReadableMap){
     log("appAttrEventAttribute: $appAttrEventAttribute","trackAppAttrWithAttributes")
     val attribute: SEAttrEventModel = SolarEngineEventAttribute.appAttrEventAttribute(appAttrEventAttribute)
     SolarEngineManager.getInstance().trackAttr(attribute)
   }
   @ReactMethod
-  fun trackOrderWithAttributes(orderEventAttribute:ReadableMap){
+  override fun trackOrderWithAttributes(orderEventAttribute:ReadableMap){
     log("orderEventAttribute: $orderEventAttribute","trackOrderWithAttributes")
     val attribute: SEOrderEventModel = SolarEngineEventAttribute.orderEventAttribute(orderEventAttribute)
     SolarEngineManager.getInstance().trackOrder(attribute)
   }
   @ReactMethod
-  fun trackRegisterWithAttributes(registerEventAttribute:ReadableMap){
+  override fun trackRegisterWithAttributes(registerEventAttribute:ReadableMap){
     log("registerEventAttribute: $registerEventAttribute","trackRegisterWithAttributes")
     val attribute: SERegisterEventModel = SolarEngineEventAttribute.registerEventAttribute(registerEventAttribute)
     SolarEngineManager.getInstance().trackAppRegister(attribute)
   }
   @ReactMethod
-  fun trackLoginWithAttributes(loginEventAttribute:ReadableMap){
+  override fun trackLoginWithAttributes(loginEventAttribute:ReadableMap){
     log("loginEventAttribute: $loginEventAttribute","trackLoginWithAttributes")
     val attribute: SELoginEventModel = SolarEngineEventAttribute.loginEventAttribute(loginEventAttribute)
     SolarEngineManager.getInstance().trackAppLogin(attribute)
   }
   /************** Custom Event *****************/
   @ReactMethod
-  fun trackCustomEvent(eventName:String,customProperties:ReadableMap?, preProperties:ReadableMap?){
+  override fun trackCustomEvent(eventName:String,customProperties:ReadableMap?, preProperties:ReadableMap?){
     log("eventName: $eventName","trackCustomEvent")
 
     val attribute = SECustomEventModel()
@@ -642,19 +658,19 @@ ts model keys:
 
   /************** Duration Event *****************/
   @ReactMethod
-  fun eventStart(eventName:String){
+  override fun eventStart(eventName:String){
     log("eventName: $eventName","eventStart")
     SolarEngineManager.getInstance().eventStart(eventName)
   }
   @ReactMethod
-  fun eventEnd(eventName:String,properties:ReadableMap){
+  override fun eventEnd(eventName:String,properties:ReadableMap){
     log("properties: $properties","eventEnd")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().eventFinish(eventName,jObject)
   }
   /************** First-Time Event *****************/
   @ReactMethod
-  fun trackFirstEvent(firstCheckId:String,eventAttribute:ReadableMap){
+  override fun trackFirstEvent(firstCheckId:String,eventAttribute:ReadableMap){
     log("eventAttribute: $eventAttribute","trackFirstEvent")
 
     val sdkInnerType = eventAttribute.getString("sdk_inner_type")
@@ -671,8 +687,8 @@ ts model keys:
         "Register" -> SolarEngineFirstEvent.registerEventAttribute(eventAttribute)
         "Login" -> SolarEngineFirstEvent.loginEventAttribute(eventAttribute)
         else -> {
-              val message = "eventAttribute invalid"
-              throw IllegalArgumentException(message)
+          val message = "eventAttribute invalid"
+          throw IllegalArgumentException(message)
         }
       }
     }
@@ -681,56 +697,56 @@ ts model keys:
   }
   /************** Set User Property *****************/
   @ReactMethod
-  fun userPropertiesInit(properties:ReadableMap){
+  override fun userPropertiesInit(properties:ReadableMap){
     log("properties: $properties","userPropertiesInit")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().userInit(jObject)
   }
   @ReactMethod
-  fun userPropertiesUpdate(properties:ReadableMap){
+  override fun userPropertiesUpdate(properties:ReadableMap){
     log("properties: $properties","userPropertiesUpdate")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().userUpdate(jObject)
   }
   @ReactMethod
-  fun userPropertiesAdd(properties:ReadableMap){
+  override fun userPropertiesAdd(properties:ReadableMap){
     log("properties: $properties","userPropertiesAdd")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().userAdd(jObject)
   }
   @ReactMethod
-  fun userPropertiesUnset(properties: ReadableArray){
+  override fun userPropertiesUnset(properties: ReadableArray){
     log("properties: $properties ,  type is: ${properties::class}","userPropertiesUnset")
 
     val keys = SolarEngineRNUtils.readableArrayToStringArray(properties)
     SolarEngineManager.getInstance().userUnset(*keys)
   }
   @ReactMethod
-  fun userPropertiesAppend(properties:ReadableMap){
+  override fun userPropertiesAppend(properties:ReadableMap){
     log("properties: $properties","userPropertiesAppend")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().userAppend(jObject)
   }
   @ReactMethod
-  fun userPropertiesDelete(deleteType:Int){
+  override fun userPropertiesDelete(deleteType: Double) {
     log("deleteType: $deleteType","userPropertiesDelete")
     var type = SEUserDeleteType.DELETE_BY_ACCOUNTID
-    if (deleteType == 1){
+    if (deleteType.toInt() == 1){
       type = SEUserDeleteType.DELETE_BY_ACCOUNTID
-    }else if (deleteType == 2){
+    }else if (deleteType.toInt() == 2){
       type = SEUserDeleteType.DELETE_BY_VISITORID
     }
     SolarEngineManager.getInstance().userDelete(type)
   }
   /************** Report Event Immediately *****************/
   @ReactMethod
-  fun reportEventimmediately(){
+  override fun reportEventimmediately(){
     log("","reportEventimmediately")
     SolarEngineManager.getInstance().reportEventImmediately()
   }
   /************** Deep Linking *****************/
   @ReactMethod
-  fun trackAppReEngagement(customProperties:ReadableMap){
+  override fun trackAppReEngagement(customProperties:ReadableMap){
     log("customProperties: $customProperties","trackAppReEngagement")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(customProperties)
     val model = SEAppReEngagementModel()
@@ -739,14 +755,14 @@ ts model keys:
   }
 
   @ReactMethod
-  fun appDeeplinkOpenURL(urlString:String){
+  override fun appDeeplinkOpenURL(urlString:String){
     log("urlString: $urlString","appDeeplinkOpenURL")
     val uri = Uri.parse(urlString)
     SolarEngineManager.getInstance().appDeeplinkOpenURI(uri)
   }
 
   @ReactMethod
-  fun setOaid(oaid:String){
+  override fun setOaid(oaid:String){
     log("oaid: $oaid","setOaid")
     try {
       val getOaidManagerClass = Class.forName("com.reyun.plugin.oaid.GetOaidManager")
@@ -761,12 +777,12 @@ ts model keys:
     }
   }
   @ReactMethod
-  fun setGaid(gaid:String){
+  override fun setGaid(gaid:String){
     log("gaid: $gaid","setGaid")
     SolarEngineManager.getInstance().setGaid(gaid)
   }
   @ReactMethod
-  fun setChannel(channel:String){
+  override fun setChannel(channel:String){
     log("channel: $channel","setChannel")
     SolarEngineManager.getInstance().setChannel(channel)
   }
@@ -774,7 +790,7 @@ ts model keys:
   /************** RemoteConfig *****************/
 
   @ReactMethod
-  fun setDefaultConfig(configs:ReadableArray){
+  override fun setDefaultConfig(configs:ReadableArray){
     log("configs: $configs","setDefaultConfig")
     val jsonArray = SolarEngineRNUtils.convertArrayToJson(configs)
     log("jsonArray: $jsonArray","setDefaultConfig")
@@ -801,7 +817,7 @@ ts model keys:
 
   }
   @ReactMethod
-  fun setRemoteConfigEventProperties(properties:ReadableMap){
+  override fun setRemoteConfigEventProperties(properties:ReadableMap){
     log("properties: $properties","setRemoteConfigEventProperties")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
 
@@ -825,7 +841,7 @@ ts model keys:
     }
   }
   @ReactMethod
-  fun setRemoteConfigUserProperties(properties:ReadableMap){
+  override fun setRemoteConfigUserProperties(properties:ReadableMap){
     log("properties: $properties","setRemoteConfigUserProperties")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
 
@@ -848,7 +864,7 @@ ts model keys:
     }
   }
   @ReactMethod
-  fun fastFetchRemoteConfigWithKey(key:String, completion: Callback) {
+  override fun fastFetchRemoteConfigWithKey(key:String, completion: Callback) {
     log("key: $key","fastFetchRemoteConfigWithKey")
 
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
@@ -879,7 +895,7 @@ ts model keys:
     }
   }
   @ReactMethod
-  fun fastFetchRemoteConfig(completion: Callback) {
+  override fun fastFetchRemoteConfig(completion: Callback) {
     log("","fastFetchRemoteConfig")
 
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
@@ -913,21 +929,26 @@ ts model keys:
     fun onResult(result: Any?)
   }
   @ReactMethod
-  fun asyncFetchRemoteConfigWithKey(key:String, completion: Callback) {
+  override fun asyncFetchRemoteConfigWithKey(key:String, completion: Callback) {
     log("key: $key","asyncFetchRemoteConfigWithKey")
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
 
       SolarEngineRemoteConfig.asyncFetchRemoteConfigWithKey(key,object :com.solarengineanalysisreactnative.OnRemoteConfigReceivedData{
-        override fun onResult(result: Any) {
+        override fun onResult(result: Any?) {
           // 处理结果
-          log("result: $result ,  type is: ${result::class}","asyncFetchRemoteConfigWithKey")
-          if (result is JSONObject){
-            val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
-            completion.invoke(reactnativeData)
+          if (result == null){
+            log("result is null", method = "asyncFetchRemoteConfigWithKey");
           }else{
-            completion.invoke(result)
+            log("result: $result ,  type is: ${result::class}","asyncFetchRemoteConfigWithKey")
+            if (result is JSONObject){
+              val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
+              completion.invoke(reactnativeData)
+            }else{
+              completion.invoke(result)
+            }
           }
+
         }
       })
 
@@ -937,9 +958,24 @@ ts model keys:
     }
   }
 
+  @ReactMethod
+  override fun requestTrackingAuthorization(callback: Callback?){
+    ;//Android don't support
+  }
 
   @ReactMethod
-  fun asyncFetchRemoteConfig(completion: Callback) {
+  override fun updatePostbackConversionValue(
+    type: Double,
+    conversionValue: Double,
+    coarseValue: String?,
+    lockWindow: Boolean,
+    callback: Callback?
+  ){
+    ;//Android don't support
+  }
+
+  @ReactMethod
+  override fun asyncFetchRemoteConfig(completion: Callback) {
     log("", "asyncFetchRemoteConfig")
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable) {
@@ -956,6 +992,5 @@ ts model keys:
     }
 
   }
-
 
 }

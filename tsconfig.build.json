@@ -1,4 +1,32 @@
 {
-  "extends": "./tsconfig",
-  "exclude": ["example", "lib"]
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "solarengine-analysis-react-native": ["./src/index"]
+    },
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noStrictGenericChecks": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
+    "verbatimModuleSyntax": true,
+    "declaration": true,
+    "outDir": "lib/typescript"
+  },
+  "include": ["src"],
+  "exclude": ["example", "lib", "**/__tests__", "**/__fixtures__", "**/__mocks__"]
 }
