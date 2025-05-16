@@ -21,7 +21,6 @@ module.exports = {
   ignorePatterns: [
     'node_modules/',
     'lib/',
-    'cli.js',
     'babel.config.js',
     'metro.config.js',
     'react-native.config.js',
