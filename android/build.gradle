@@ -43,6 +43,8 @@ android {
 
     if(SolarengineAnalysisGradleProperties_EnableRemoteConfig.toBoolean()) {
       buildConfigField "boolean", "ENABLE_REMOTECONFIG", "true"
+    }else{
+      buildConfigField "boolean", "ENABLE_REMOTECONFIG", "false"
     }
   }
 
