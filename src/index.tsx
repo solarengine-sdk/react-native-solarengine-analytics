@@ -10,7 +10,7 @@ import {
 } from './ConfigItem';
 // export  *  from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.2';
+const SolarEnginePluginVersion = '1.6.3';
 
 import type {
   SolarEngineInitiateOptions,
@@ -53,6 +53,8 @@ import {
   Paypal,
 } from './pre_defined_event';
 
+import type { AttributionInfo } from './types/attribution';
+
 export function multiply(a: number, b: number): number {
   return SolarengineAnalysis.multiply(a, b);
 }
@@ -70,6 +72,29 @@ function _setReactNativeBridgeVersion() {
 function _handleAttribution(attribution: attribution | undefined) {
   if (attribution === undefined) {
     return;
+  }
+
+  // 递归处理归因数据
+  function processAttributionData(data: any): Record<string, any> {
+    if (!data || typeof data !== 'object') {
+      return {};
+    }
+
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value === null || value === undefined) {
+        continue;
+      }
+
+      if (key === 're_data' && typeof value === 'object') {
+        // 递归处理 re_data
+        result[key] = processAttributionData(value);
+      } else {
+        result[key] = String(value);
+      }
+    }
+
+    return result;
   }
 
   SolarengineAnalysis.registerAttribution((attributionResult: Object) => {
@@ -98,8 +123,13 @@ function _handleAttribution(attribution: attribution | undefined) {
     let code = reactnative_code as number;
     if (code === 0) {
       if (attribution) {
-        let data = reactnative_data as Object;
-        attribution(code, data);
+        if (reactnative_data && typeof reactnative_data === 'object') {
+          const attributionData = processAttributionData(reactnative_data);
+          attribution(code, attributionData as AttributionInfo);
+        } else {
+          code = -1;
+          attribution(code);
+        }
       }
     } else {
       if (attribution) {
@@ -648,6 +678,7 @@ export type {
   SERegisterEventAttribute,
   SELoginEventAttribute,
   SECustomEventAttribute,
+  AttributionInfo,
 };
 
 export {
