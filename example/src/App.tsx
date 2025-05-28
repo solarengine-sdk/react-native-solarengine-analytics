@@ -449,7 +449,7 @@ async function Initiate() {
     remoteConfig: remoteConfig,
     attribution: attribution,
     deeplink: deeplink,
-    deferredDeeplink: deferredDeeplink
+    deferredDeeplink: deferredDeeplink,
   };
   SolarEngine.initialize(
     appKey,
