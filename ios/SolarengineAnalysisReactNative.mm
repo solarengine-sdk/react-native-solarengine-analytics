@@ -405,11 +405,11 @@ RCT_EXPORT_METHOD(registerAttribution:(RCTResponseSenderBlock)callback) {
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 - (void)registerDeeplink:(RCTResponseSenderBlock)callback{
-  [self _registerAttribution:callback];
+  [self _registerDeeplink:callback];
 }
 #else
 RCT_EXPORT_METHOD(registerDeeplink:(RCTResponseSenderBlock)deeplink){
-  [self _registerAttribution:deeplink];
+  [self _registerDeeplink:deeplink];
 }
 #endif
 

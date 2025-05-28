@@ -1,3 +1,5 @@
+import type { AttributionCallback } from './types/attribution';
+
 export type se_initial_config = {
   //Whether to enable local debugging logs, the default is not enabled.
   enableLog?: boolean;
@@ -93,7 +95,8 @@ type deferredDeeplink = (
   code: number,
   deferredDeepLinkInfo?: DeferredDeepLinkInfo
 ) => void;
-type attribution = (code: number, attribution?: Object) => void;
+
+type attribution = AttributionCallback;
 type requestTrackingAuthorizationCompletion = (
   status: ATTrackingManagerAuthorizationStatus
 ) => void;

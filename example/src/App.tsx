@@ -13,7 +13,6 @@ import type {
   DeepLinkInfo,
   DeferredDeepLinkInfo,
   requestTrackingAuthorizationCompletion,
-  CustomDomain,
   SEAdImpressionEventAttribute,
   SEAdClickEventAttribute,
   SEIAPEventAttribute,
@@ -23,6 +22,7 @@ import type {
   SELoginEventAttribute,
   ConfigItem,
   SECustomEventAttribute,
+  AttributionInfo,
 } from 'solarengine-analysis-react-native';
 import {
   SEUserDeleteType,
@@ -327,13 +327,17 @@ function _afterSDKInitialized() {
   trackAppReEngagement();
   appDeeplinkOpenURL();
 }
+
+let AndroidAppKey4Solarengine = 'a9f4882f4834592b'; //'e62fe50b80fc6e5c';//'3774454bfa22233a';//
+let iOSAppKey4Solarengine = '07df077973a84ea7'; //1d91d62522d9a96d
+
 function _preInit() {
   log('preInit');
   let appKey = '';
   if (Platform.OS === 'ios') {
-    appKey = '07df077973a84ea7';
+    appKey = AndroidAppKey4Solarengine;
   } else if (Platform.OS === 'android') {
-    appKey = 'e62fe50b80fc6e5c';
+    appKey = iOSAppKey4Solarengine;
   }
 
   // SolarEngine.multiply(11,11);
@@ -344,7 +348,7 @@ function _preInit() {
 function buildInitialConfig(): se_initial_config {
   let config: se_initial_config = {
     enableLog: true,
-    enableDebug: true,
+    enableDebug: false,
     enable2G: true,
     enableGDPR: true,
     enablePersonalizedAd: true,
@@ -352,9 +356,9 @@ function buildInitialConfig(): se_initial_config {
     enableCoppa: true,
     enableKidsApp: true,
     enableDeferredDeeplink: true,
-    android: {
-      metaAppId: 'place_your_meta_app_here',
-    },
+    // android: {
+    //   metaAppId: 'place_your_meta_app_here',
+    // },
     ios: {
       attAuthorizationWaitingInterval: 60,
       caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"},{"version":"20211207","caid":"e332a76c29654fcb7f6e6b31ced090c7"}]',
@@ -375,27 +379,23 @@ function buildRemoteConfig(): RemoteConfig {
 function buildAttribution(): attribution {
   const handleAttribution: attribution = (
     code: number,
-    attributionInfo?: Object
+    attributionInfo?: AttributionInfo
   ) => {
     log('attribution code: ' + code);
     if (code === 0) {
       log('attributionInfo: ' + JSON.stringify(attributionInfo));
-      const typedValue = attributionInfo as {
-        channel_name: string;
-        attribution_time: string;
-        re_data: object;
-      };
-      log('channel_name: ' + typedValue.channel_name);
-      log('attribution_time: ' + typedValue.attribution_time);
-      const re_dataValue = typedValue.re_data as {
-        install_time: string;
-        report_time: string;
-      };
-      if (typedValue.re_data != null) {
-        log('re_data.install_time: ' + re_dataValue.install_time);
-        log('re_data.report_time: ' + re_dataValue.report_time);
-      } else {
-        log('re_data: is null');
+      if (attributionInfo) {
+        log('channel_name: ' + attributionInfo.channel_name);
+        log('attribution_time: ' + attributionInfo.attribution_time);
+        if (attributionInfo.re_data) {
+          log('re_data.install_time: ' + attributionInfo.re_data.install_time);
+          log(
+            're_data.attribution_time: ' +
+              attributionInfo.re_data.attribution_time
+          );
+        } else {
+          log('re_data: is null');
+        }
       }
     }
   };
@@ -410,8 +410,6 @@ function buildDeeplinkResponse(): deeplink {
       if (deepLinkInfo) {
         log('deepLinkInfo.sedpLink: ' + deepLinkInfo.sedpLink);
       }
-    } else {
-      log('code: ' + code);
     }
   };
   return handleDeepLink;
@@ -425,22 +423,9 @@ function buildDeferredDeeplinkResponse(): deferredDeeplink {
       if (deferreddeeplink) {
         log('deferreddeeplink.sedpLink: ' + deferreddeeplink.sedpLink);
       }
-    } else {
-      log('code: ' + code);
     }
   };
   return handleDeferredDeeplink;
-}
-function buildCustomDomain(): CustomDomain {
-  let customDomain: CustomDomain = {
-    enabled: true,
-    receiverDomain: 'https://your.domain.com',
-    ruleDomain: 'https://your.rule_domain.com',
-    receiverTcpHost: 'your.tcp.domain.com',
-    ruleTcpHost: 'your.tcp.rule.domain.com',
-    gatewayTcpHost: 'your.gateway.domain.com',
-  };
-  return customDomain;
 }
 
 async function Initiate() {
@@ -448,23 +433,23 @@ async function Initiate() {
 
   let appKey = '';
   if (Platform.OS === 'ios') {
-    appKey = 'place_your_iOSAppkey_here';
+    appKey = iOSAppKey4Solarengine;
   } else if (Platform.OS === 'android') {
-    appKey = 'place_your_AndroidAppkey_here';
+    appKey = AndroidAppKey4Solarengine;
   }
+
   let config: se_initial_config = buildInitialConfig();
   let remoteConfig: RemoteConfig = buildRemoteConfig();
   let attribution: attribution = buildAttribution();
   let deeplink: deeplink = buildDeeplinkResponse();
   let deferredDeeplink: deferredDeeplink = buildDeferredDeeplinkResponse();
-  let customDomain: CustomDomain = buildCustomDomain();
+
   let initiateOptions: SolarEngineInitiateOptions = {
     config: config,
     remoteConfig: remoteConfig,
     attribution: attribution,
     deeplink: deeplink,
-    deferredDeeplink: deferredDeeplink,
-    customDomain: customDomain,
+    deferredDeeplink: deferredDeeplink
   };
   SolarEngine.initialize(
     appKey,
