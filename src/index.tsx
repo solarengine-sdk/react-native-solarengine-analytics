@@ -8,9 +8,8 @@ import {
   numberItem,
   objectItem,
 } from './ConfigItem';
-// export  *  from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.3';
+const SolarEnginePluginVersion = '1.6.4';
 
 import type {
   SolarEngineInitiateOptions,
@@ -365,7 +364,7 @@ export function retrievePresetProperties(): Object {
 /************** Properties for specified Preset event *****************/
 export function setPreSetEventWithProperties(
   eventType: PresetEventType,
-  properties: Object
+  properties?: Object
 ) {
   SolarengineAnalysis.setPresetProperties(String(eventType), properties);
 }
@@ -424,7 +423,7 @@ export function trackCustomEvent(
 export function eventStart(eventName: string) {
   SolarengineAnalysis.eventStart(eventName);
 }
-export function eventEnd(eventName: string, properties: Object) {
+export function eventEnd(eventName: string, properties?: Object) {
   SolarengineAnalysis.eventEnd(eventName, properties);
 }
 /************** First-Time Event *****************/
@@ -636,7 +635,7 @@ export function updatePostbackConversionValue(
 }
 
 /************** Android *****************/
-export function setOaid(oaid: string) {
+export function setOaid(oaid?: string) {
   if (Platform.OS === 'ios') {
     log(`"setOaid" not supported in iOS device`);
   } else if (Platform.OS === 'android') {
