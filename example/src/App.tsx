@@ -608,7 +608,7 @@ function trackAppAttrWithAttributes() {
     adCreativeID: '1680128668901378',
     adCreativeName: '自动创建20210901178921',
     attributionPlatform: '广告监测平台xxx',
-    customProperties: { customProperties: 'app attr customProperties value' }
+    customProperties: { customProperties: 'app attr customProperties value' },
   };
   SolarEngine.trackAppAttrWithAttributes(attribute);
 }
@@ -645,7 +645,7 @@ function trackCustomEvent() {
   let preProperties = {
     trackCustomEvent_key: ' trackCustomEvent_properties_singleValue',
   };
-  SolarEngine.trackCustomEvent(eventName,customProperties, preProperties);
+  SolarEngine.trackCustomEvent(eventName, customProperties, preProperties);
 }
 function eventStart() {
   let eventName = 'time_event_name';
