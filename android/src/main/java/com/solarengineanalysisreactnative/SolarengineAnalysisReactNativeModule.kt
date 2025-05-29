@@ -557,7 +557,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   }
   /************** Properties for specified Preset event *****************/
   @ReactMethod
-  override fun setPresetProperties(eventTypeString:String,properties:ReadableMap){
+  override fun setPresetProperties(eventTypeString:String,properties:ReadableMap?){
     log("properties: $properties","setPresetProperties")
     var appInstall = false
     var appStart = false
@@ -663,7 +663,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     SolarEngineManager.getInstance().eventStart(eventName)
   }
   @ReactMethod
-  override fun eventEnd(eventName:String,properties:ReadableMap){
+  override fun eventEnd(eventName:String,properties:ReadableMap?){
     log("properties: $properties","eventEnd")
     val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
     SolarEngineManager.getInstance().eventFinish(eventName,jObject)
@@ -762,7 +762,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   }
 
   @ReactMethod
-  override fun setOaid(oaid:String){
+  override fun setOaid(oaid:String?){
     log("oaid: $oaid","setOaid")
     try {
       val getOaidManagerClass = Class.forName("com.reyun.plugin.oaid.GetOaidManager")

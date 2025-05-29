@@ -6,13 +6,13 @@ declare type SECustomEventAttribute = {
 declare type SEAdImpressionEventAttribute = {
   adNetworkPlatform: string;
   adType: number;
-  adNetworkAppID: string;
+  adNetworkAppID?: string;
   adNetworkPlacementID: string;
   mediationPlatform: string;
   currency: string;
   ecpm: number;
   rendered: boolean;
-  customProperties: Object;
+  customProperties?: Object;
 };
 
 declare type SEAdClickEventAttribute = {
@@ -20,7 +20,7 @@ declare type SEAdClickEventAttribute = {
   adType: number;
   adNetworkPlacementID: string;
   mediationPlatform: string;
-  customProperties: Object;
+  customProperties?: Object;
 };
 
 export enum SEIAPStatus {
@@ -64,52 +64,52 @@ export enum SKAdNetworkCoarseType {
 }
 
 declare type SEIAPEventAttribute = {
-  productID: string;
-  productName: string;
-  productCount: number;
-  orderId: string;
+  productID?: string;
+  productName?: string;
+  productCount?: number;
+  orderId?: string;
   payAmount: number;
   currency: string;
-  payType: string;
+  payType?: string;
   payStatus: SEIAPStatus;
-  failReason: string;
-  customProperties: Object;
+  failReason?: string;
+  customProperties?: Object;
 };
 
 declare type SEAppAttrEventAttribute = {
   adNetwork: string;
-  subChannel: string;
-  adAccountID: string;
-  adAccountName: string;
-  adCampaignID: string;
-  adCampaignName: string;
-  adOfferID: string;
-  adOfferName: string;
-  adCreativeID: string;
-  adCreativeName: string;
+  subChannel?: string;
+  adAccountID?: string;
+  adAccountName?: string;
+  adCampaignID?: string;
+  adCampaignName?: string;
+  adOfferID?: string;
+  adOfferName?: string;
+  adCreativeID?: string;
+  adCreativeName?: string;
   attributionPlatform: string;
-  customProperties: Object;
+  customProperties?: Object;
 };
 
 declare type SEOrderEventAttribute = {
-  orderID: string;
+  orderID?: string;
   payAmount: number;
   currency: string;
-  payType: string;
+  payType?: string;
   status: string;
-  customProperties: Object;
+  customProperties?: Object;
 };
 
 declare type SERegisterEventAttribute = {
   registerType: string;
-  registerStatus: string;
-  customProperties: Object;
+  registerStatus?: string;
+  customProperties?: Object;
 };
 
 declare type SELoginEventAttribute = {
   loginType: string;
-  loginStatus: string;
-  customProperties: Object;
+  loginStatus?: string;
+  customProperties?: Object;
 };
 
 export type {

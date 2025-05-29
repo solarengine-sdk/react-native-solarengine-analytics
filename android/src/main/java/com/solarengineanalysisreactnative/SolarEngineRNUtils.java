@@ -72,6 +72,10 @@ public class SolarEngineRNUtils {
 
   public static JSONObject convertMapToJson(ReadableMap readableMap) throws JSONException {
     JSONObject object = new JSONObject();
+    if (readableMap == null) {
+      return object;
+    }
+
     ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
     while (iterator.hasNextKey()) {
       String key = iterator.nextKey();
@@ -105,6 +109,10 @@ public class SolarEngineRNUtils {
 
   public static JSONArray convertArrayToJson(ReadableArray readableArray) throws JSONException {
     JSONArray array = new JSONArray();
+    if (readableArray == null) {
+      return array;
+    }
+    
     for (int i = 0; i < readableArray.size(); i++) {
       switch (readableArray.getType(i)) {
         case Null:

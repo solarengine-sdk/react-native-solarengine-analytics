@@ -545,8 +545,8 @@ function retrievePresetProperties() {
 function setPreSetEventWithProperties() {
   let eventType: PresetEventType =
     PresetEventType.START | PresetEventType.INSTALL | PresetEventType.END;
-  let properties = {};
-  SolarEngine.setPreSetEventWithProperties(eventType, properties);
+
+  SolarEngine.setPreSetEventWithProperties(eventType);
 }
 function trackAdImpressionWithAttributes() {
   let attribute: SEAdImpressionEventAttribute = {
@@ -608,7 +608,7 @@ function trackAppAttrWithAttributes() {
     adCreativeID: '1680128668901378',
     adCreativeName: '自动创建20210901178921',
     attributionPlatform: '广告监测平台xxx',
-    customProperties: { customProperties: 'app attr customProperties value' },
+    customProperties: { customProperties: 'app attr customProperties value' }
   };
   SolarEngine.trackAppAttrWithAttributes(attribute);
 }
@@ -645,7 +645,7 @@ function trackCustomEvent() {
   let preProperties = {
     trackCustomEvent_key: ' trackCustomEvent_properties_singleValue',
   };
-  SolarEngine.trackCustomEvent(eventName, customProperties, preProperties);
+  SolarEngine.trackCustomEvent(eventName,customProperties, preProperties);
 }
 function eventStart() {
   let eventName = 'time_event_name';
@@ -653,8 +653,7 @@ function eventStart() {
 }
 function eventEnd() {
   let eventName = 'time_event_name';
-  let properties = { properties_key: ' properties value' };
-  SolarEngine.eventEnd(eventName, properties);
+  SolarEngine.eventEnd(eventName);
 }
 function trackFirstEvent() {
   let firstCheckId = 'login first check id';

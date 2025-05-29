@@ -40,7 +40,7 @@ export interface Spec extends TurboModule {
 
   // Preset Properties
   retrievePresetProperties(): Object;
-  setPresetProperties(eventType: string, properties: Object): void;
+  setPresetProperties(eventType: string, properties?: Object): void;
 
   // Predefined Events
   trackAdImpressionWithAttributes(attributes: Object): void;
@@ -60,7 +60,7 @@ export interface Spec extends TurboModule {
 
   // Duration Event
   eventStart(eventName: string): void;
-  eventEnd(eventName: string, properties: Object): void;
+  eventEnd(eventName: string, properties?: Object): void;
 
   // First-Time Event
   trackFirstEvent(firstCheckId: string, eventAttribute: Object): void;
@@ -109,7 +109,7 @@ export interface Spec extends TurboModule {
   ): void;
 
   // Android Specific
-  setOaid(oaid: string): void;
+  setOaid(oaid?: string): void;
   setGaid(gaid: string): void;
   setChannel(channel: string): void;
 }
