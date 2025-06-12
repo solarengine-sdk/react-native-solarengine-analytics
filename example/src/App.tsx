@@ -473,7 +473,6 @@ function retrieveAttribution() {
   log('attribution: ' + JSON.stringify(attribution));
 
   if (attribution != null) {
-
     log('channel_id:' + attribution.channel_id);
     log('channel_name:' + attribution.channel_name);
     log('attribution_time:' + attribution.attribution_time);
