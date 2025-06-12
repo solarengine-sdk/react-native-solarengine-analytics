@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.5';
+const SolarEnginePluginVersion = '1.6.6';
 
 import type {
   SolarEngineInitiateOptions,
@@ -193,7 +193,7 @@ function _handleDeferredDeeplink(
     return;
   }
 
-  SolarengineAnalysis.registerDelayDeeplink(
+  SolarengineAnalysis.registerDeferredDeeplink(
     (deferredDeeplinkResult: Object) => {
       const dictData = deferredDeeplinkResult as {
         [key: string]: string | number | Object;
@@ -288,9 +288,14 @@ export function initialize(
 }
 
 /************** Attribution *****************/
-export function retrieveAttribution(): Object | null {
+export function retrieveAttribution(): AttributionInfo | null {
   if (Platform.OS === 'ios') {
-    return SolarengineAnalysis.retrieveAttribution();
+    let result = SolarengineAnalysis.retrieveAttribution();
+    if (result == null) {
+      return null;
+    }
+    let data = result as AttributionInfo;
+    return data;
   } else if (Platform.OS === 'android') {
     let result = SolarengineAnalysis.retrieveAttribution();
     if (result == null) {
@@ -299,9 +304,10 @@ export function retrieveAttribution(): Object | null {
 
     const dictData = result as { [key: string]: Object };
     let resultObject = dictData.android_object_wrapper_key as Object;
-    return resultObject;
+    let data = resultObject as AttributionInfo;
+    return data;
   }
-  return SolarengineAnalysis.retrieveAttribution();
+  return SolarengineAnalysis.retrieveAttribution() as AttributionInfo;
 }
 
 /************** DistinctId *****************/
