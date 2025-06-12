@@ -274,10 +274,10 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
   }
 #endif
   
-  BOOL enableDelayDeeplink = NO;
-  if (config[@"enableDelayDeeplink"]) {
-    enableDelayDeeplink = [config[@"enableDelayDeeplink"] boolValue];
-    seconfig.enableDelayDeeplink = enableDelayDeeplink;
+  BOOL enableDeferredDeeplink = NO;
+  if (config[@"enableDeferredDeeplink"]) {
+    enableDeferredDeeplink = [config[@"enableDeferredDeeplink"] boolValue];
+    seconfig.enableDelayDeeplink = enableDeferredDeeplink;
   }
   
   [SolarengineAnalysisReactNative log:config method:_cmd];
@@ -416,14 +416,14 @@ RCT_EXPORT_METHOD(registerDeeplink:(RCTResponseSenderBlock)deeplink){
 
 
 
-- (void)_registerDelayDeeplink:(RCTResponseSenderBlock)delayDeeplink{
+- (void)_registerDeferredDeeplink:(RCTResponseSenderBlock)deferredDeeplink{
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
   
-  if(delayDeeplink == nil){
+  if(deferredDeeplink == nil){
     return;
   }
-  //  setDelayDeeplinkDeepLinkCallbackWithSuccess //old
-  //  setDelayDeepLinkCallbackWithSuccess //new: from sdk version ?
+  //  setDe layDeeplinkDeepLinkCallbackWithSuccess //old
+  //  setDe layDeepLinkCallbackWithSuccess //new: from sdk version ?
   
   [[SolarEngineSDK sharedInstance] setDelayDeepLinkCallbackWithSuccess:^(SEDelayDeeplinkInfo * _Nullable deeplinkInfo) {
     
@@ -453,8 +453,8 @@ RCT_EXPORT_METHOD(registerDeeplink:(RCTResponseSenderBlock)deeplink){
       _code = -2;
     }
     [result setObject:@(_code) forKey:@"reactnative_code"];
-    if(delayDeeplink){
-      delayDeeplink(@[result]);
+    if(deferredDeeplink){
+      deferredDeeplink(@[result]);
     }
   } fail:^(NSError * _Nullable error) {
     
@@ -462,19 +462,19 @@ RCT_EXPORT_METHOD(registerDeeplink:(RCTResponseSenderBlock)deeplink){
     
     NSMutableDictionary *result = [[NSMutableDictionary alloc]init];
     [result setObject:@(error.code) forKey:@"reactnative_code"];
-    if(delayDeeplink){
-      delayDeeplink(@[result]);
+    if(deferredDeeplink){
+      deferredDeeplink(@[result]);
     }
   }];
 }
 
 #ifdef RCT_NEW_ARCH_ENABLED
-- (void)registerDelayDeeplink:(RCTResponseSenderBlock)callback{
-  [self _registerDelayDeeplink:callback];
+- (void)registerDeferredDeeplink:(RCTResponseSenderBlock)callback{
+  [self _registerDeferredDeeplink:callback];
 }
 #else
-RCT_EXPORT_METHOD(registerDelayDeeplink:(RCTResponseSenderBlock)delayDeeplink){
-  [self _registerDelayDeeplink:delayDeeplink];
+RCT_EXPORT_METHOD(registerDeferredDeeplink:(RCTResponseSenderBlock)deferredDeeplink){
+  [self _registerDeferredDeeplink:deferredDeeplink];
 }
 #endif
 

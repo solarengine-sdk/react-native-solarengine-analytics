@@ -16,7 +16,7 @@ export interface Spec extends TurboModule {
   registerInitiateComplete(callback: (code: number) => void): void;
   registerAttribution(callback: (result: Object) => void): void;
   registerDeeplink(callback: (result: Object) => void): void;
-  registerDelayDeeplink(callback: (result: Object) => void): void;
+  registerDeferredDeeplink(callback: (result: Object) => void): void;
 
   // Attribution
   retrieveAttribution(): Object | null;

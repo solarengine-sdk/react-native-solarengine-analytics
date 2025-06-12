@@ -469,16 +469,14 @@ function setGDPRArea() {
   SolarEngine.setGDPRArea(true);
 }
 function retrieveAttribution() {
-  let attribution: Object | null = SolarEngine.retrieveAttribution();
-  if (attribution != null) {
-    log('attribution: ' + JSON.stringify(attribution));
+  let attribution: AttributionInfo | null = SolarEngine.retrieveAttribution();
+  log('attribution: ' + JSON.stringify(attribution));
 
-    const object = attribution as {
-      channel_name: string;
-      attribution_time: string;
-    };
-    log('channel_name:' + object.channel_name);
-    log('attribution_time:' + object.attribution_time);
+  if (attribution != null) {
+
+    log('channel_id:' + attribution.channel_id);
+    log('channel_name:' + attribution.channel_name);
+    log('attribution_time:' + attribution.attribution_time);
   } else {
     log('attribution is null');
   }

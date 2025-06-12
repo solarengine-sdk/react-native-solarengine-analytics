@@ -16,7 +16,7 @@ class SolarEngineSingleton {
   }
 
   var initiateComplete: Callback? = null
-  var delayDeeplink:Callback? = null
+  var deferredDeeplink:Callback? = null
   var deeplink:Callback? = null
   var attribution:Callback? = null
 
