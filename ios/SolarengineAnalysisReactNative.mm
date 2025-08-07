@@ -422,10 +422,11 @@ RCT_EXPORT_METHOD(registerDeeplink:(RCTResponseSenderBlock)deeplink){
   if(deferredDeeplink == nil){
     return;
   }
-  //  setDe layDeeplinkDeepLinkCallbackWithSuccess //old
-  //  setDe layDeepLinkCallbackWithSuccess //new: from sdk version ?
+  //  setDe layDeeplinkDeepLinkCallbackWithSuccess // before 1.3.0.0
+  //  setDe layDeepLinkCallbackWithSuccess // from 1.3.0.0 to 1.3.0.1 
+  //  setDe ferredDeepLinkCallbackWithSuccess  // from 1.3.0.3
   
-  [[SolarEngineSDK sharedInstance] setDelayDeepLinkCallbackWithSuccess:^(SEDelayDeeplinkInfo * _Nullable deeplinkInfo) {
+  [[SolarEngineSDK sharedInstance] setDeferredDeepLinkCallbackWithSuccess:^(SEDeferredDeeplinkInfo * _Nullable deeplinkInfo) {
     
     NSMutableDictionary *result = [[NSMutableDictionary alloc]init];
     NSMutableDictionary *data = [[NSMutableDictionary alloc]init];
