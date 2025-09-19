@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.7';
+const SolarEnginePluginVersion = '1.6.8';
 
 import type {
   SolarEngineInitiateOptions,
@@ -436,13 +436,7 @@ export function eventEnd(eventName: string, properties?: Object) {
 export function trackFirstEvent(
   firstCheckId: string,
   eventAttribute:
-    | SEIAPEventAttribute
-    | SEAppAttrEventAttribute
-    | SEOrderEventAttribute
-    | SERegisterEventAttribute
-    | SELoginEventAttribute
-    | SEAdImpressionEventAttribute
-    | SEAdClickEventAttribute
+    SERegisterEventAttribute
     | SECustomEventAttribute
 ) {
   let _eventAttribute = decorateEventType(eventAttribute);

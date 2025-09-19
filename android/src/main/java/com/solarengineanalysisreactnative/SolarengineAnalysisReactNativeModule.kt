@@ -359,7 +359,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
     if (configMap?.hasKey("enableDeferredDeeplink") == true) {
       val enableDeferredDeeplink = configMap.getBoolean("enableDeferredDeeplink")
-      seConfig.enableDelayDeeplink = enableDeferredDeeplink
+      seConfig.enableDeferredDeeplink = enableDeferredDeeplink
     }
 
     val solarEngineConfig:SolarEngineConfig = seConfig.build()

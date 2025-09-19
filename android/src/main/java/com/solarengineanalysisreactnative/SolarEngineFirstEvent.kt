@@ -125,7 +125,7 @@ class SolarEngineFirstEvent {
         attribute.currencyType = eventAttribute.getString("currency")
       }
       if (eventAttribute.hasKey("payType")){
-        val payTypeValue  = eventAttribute.getString("mediationPlatform")
+        val payTypeValue  = eventAttribute.getString("payType")
         var iapEventPayType: String? = null
         val wx = "Wei" + "xin"
         payTypeValue?.let { payType ->
@@ -169,7 +169,19 @@ class SolarEngineFirstEvent {
         attribute.currencyType = eventAttribute.getString("currency")
       }
       if (eventAttribute.hasKey("payType")){
-        attribute.payType = eventAttribute.getString("payType")
+        val payTypeValue  = eventAttribute.getString("payType")
+        var iapEventPayType: String? = null
+        val wx = "Wei" + "xin"
+        payTypeValue?.let { payType ->
+          iapEventPayType = when (payType) {
+            "Alipay" -> "alipay"
+            wx -> "wei" + "xin"
+            "ApplePay" -> "apple" + "pay"
+            "Paypal" -> "paypal"
+            else -> payType
+          }
+        }
+        attribute.payType = iapEventPayType
       }
       if (eventAttribute.hasKey("status")){
         attribute.status = eventAttribute.getString("status")
