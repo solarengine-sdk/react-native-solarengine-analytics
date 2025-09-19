@@ -435,9 +435,7 @@ export function eventEnd(eventName: string, properties?: Object) {
 /************** First-Time Event *****************/
 export function trackFirstEvent(
   firstCheckId: string,
-  eventAttribute:
-    SERegisterEventAttribute
-    | SECustomEventAttribute
+  eventAttribute: SERegisterEventAttribute | SECustomEventAttribute
 ) {
   let _eventAttribute = decorateEventType(eventAttribute);
   SolarengineAnalysis.trackFirstEvent(firstCheckId, _eventAttribute);
