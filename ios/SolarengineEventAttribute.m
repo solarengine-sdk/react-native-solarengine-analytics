@@ -243,8 +243,21 @@ NSString * const Paypal                    = @"paypal";
             attribute.currencyType = eventAttribute[@"currency"];
         }
         if ([eventAttribute[@"payType"] isKindOfClass:[NSString class]]) {
-            attribute.payType = eventAttribute[@"payType"];
-        }
+          NSString *iapEventPayType = nil;
+          NSString *_payType = eventAttribute[@"payType"];
+          if ([_payType isEqualToString:Alipay]){
+              iapEventPayType = SEIAPEventPayTypeAlipay;
+          }else if ([_payType isEqualToString:Weixin]){
+              iapEventPayType = SEIAPEventPayTypeWeixin;
+          }else if ([_payType isEqualToString:ApplePay]) {
+              iapEventPayType = SEIAPEventPayTypeApplePay;
+          }else if ([_payType isEqualToString:Paypal]) {
+              iapEventPayType = SEIAPEventPayTypePaypal;
+          }else{
+              iapEventPayType = _payType;
+          }
+          attribute.payType = iapEventPayType;
+      }
         if ([eventAttribute[@"status"] isKindOfClass:[NSString class]]) {
             attribute.status = eventAttribute[@"status"];/////
         }

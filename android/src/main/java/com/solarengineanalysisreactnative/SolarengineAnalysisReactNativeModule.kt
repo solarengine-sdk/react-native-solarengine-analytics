@@ -216,6 +216,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   override fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
 
     log("appKey: $appKey","initialize")
+    log("", "initialization beign====")
 
     if (appKey.isEmpty()) {
       val message = "appKey can`t be empty"
@@ -358,7 +359,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
     if (configMap?.hasKey("enableDeferredDeeplink") == true) {
       val enableDeferredDeeplink = configMap.getBoolean("enableDeferredDeeplink")
-      seConfig.enableDelayDeeplink = enableDeferredDeeplink
+      seConfig.enableDeferredDeeplink = enableDeferredDeeplink
     }
 
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
@@ -415,9 +416,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val log = "init code: $code"
       log(log, "OnInitializationCallback")
     }
+      log("", "initialization end====")
 
   }
-  
   /************** Attribution *****************/
   @ReactMethod(isBlockingSynchronousMethod = true)
   override fun retrieveAttribution() :WritableMap?{
