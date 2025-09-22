@@ -348,7 +348,7 @@ function _preInit() {
 }
 function buildInitialConfig(): se_initial_config {
   let config: se_initial_config = {
-    enableLog: true,
+    enableLog: false,
     enableDebug: false,
     enable2G: true,
     enableGDPR: true,
