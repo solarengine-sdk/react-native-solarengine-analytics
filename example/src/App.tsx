@@ -658,7 +658,9 @@ function trackFirstEvent() {
   let attribute: SERegisterEventAttribute = {
     registerType: 'XXXXX',
     registerStatus: 'failed',
-    customProperties: { customProperties_key: 'register customProperties value' },
+    customProperties: {
+      customProperties_key: 'register customProperties value',
+    },
   };
 
   SolarEngine.trackFirstEvent(firstCheckId, attribute);
