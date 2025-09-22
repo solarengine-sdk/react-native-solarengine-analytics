@@ -653,11 +653,13 @@ function eventEnd() {
   SolarEngine.eventEnd(eventName);
 }
 function trackFirstEvent() {
-  let firstCheckId = 'login first check id';
-  let attribute: SELoginEventAttribute = {
-    loginType: 'WeChat',
-    loginStatus: 'failed',
-    customProperties: { customProperties_key: 'login customProperties value' },
+  let firstCheckId = 'register_first_check_id';
+  let attribute: SERegisterEventAttribute = {
+    registerType: 'XXXXX',
+    registerStatus: 'failed',
+    customProperties: {
+      customProperties_key: 'register customProperties value',
+    },
   };
   SolarEngine.trackFirstEvent(firstCheckId, attribute);
 
