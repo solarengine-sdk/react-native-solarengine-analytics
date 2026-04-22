@@ -23,7 +23,6 @@ export interface Spec extends TurboModule {
 
   // DistinctId
   fetchDistinctId(): string;
-
   // VisitorID
   setVisitorID(visitorID: string): void;
   fetchVisitor(): string;
@@ -96,7 +95,7 @@ export interface Spec extends TurboModule {
   asyncFetchRemoteConfig(callback: (configs?: Object) => void): void;
 
   // GDPR
-  setGDPRArea(isGDPRArea: boolean): void;
+  setGDPRArea(isGDPRArea: boolean): void; //no harmony
 
   // iOS Specific
   requestTrackingAuthorization(callback: (status: number) => void): void;
@@ -109,9 +108,9 @@ export interface Spec extends TurboModule {
   ): void;
 
   // Android Specific
-  setOaid(oaid?: string): void;
-  setGaid(gaid: string): void;
-  setChannel(channel: string): void;
+  setOaid(oaid?: string): void; //harmony
+  setGaid(gaid: string): void; //only android
+  setChannel(channel: string): void; //harmony
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>(

@@ -33,6 +33,9 @@ export type se_initial_config = {
     //If you need to use meta attribution, set the meta appid here.
     metaAppId?: string;
   };
+  harmony?: {
+    authorizationTimeout?: number;
+  };
 
   /************** iOS only, if need *****************/
   ios?: {
