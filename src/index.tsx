@@ -60,6 +60,7 @@ type HarmonyCallbackModule = {
   retrievePresetProperties(callback: (result: Object) => void): void;
   currentPlatform(): string;
   authorizationCompleted(): void;
+  setInternalLogEnabled(enabled: boolean): void;
   requestPermissionsFromUser(callback: (status: number) => void): void;
 };
 
@@ -350,6 +351,12 @@ export function retrieveAttribution(): AttributionInfo | null {
 
 /************** DistinctId *****************/
 export function fetchDistinctId(): string {
+  if (harmonyPlatform()) {
+    log(
+      `"fetchDistinctId" is callback-only on harmony, use "fetchDistinctIdWithCallback"`
+    );
+    return '';
+  }
   let distinctId = SolarengineAnalysis.fetchDistinctId();
   return distinctId;
 }
@@ -369,6 +376,12 @@ export function setVisitorID(visitorID: string) {
 }
 
 export function fetchVisitor(): string {
+  if (harmonyPlatform()) {
+    log(
+      `"fetchVisitor" is callback-only on harmony, use "fetchVisitorWithCallback"`
+    );
+    return '';
+  }
   let visitor = SolarengineAnalysis.fetchVisitor();
   return visitor;
 }
@@ -407,6 +420,12 @@ export function clearSuperProperties() {
 
 /************** Properties for all Preset event *****************/
 export function retrievePresetProperties(): Object {
+  if (harmonyPlatform()) {
+    log(
+      `"retrievePresetProperties" is callback-only on harmony, use "retrievePresetPropertiesWithCallBack"`
+    );
+    return {};
+  }
   if (Platform.OS === 'ios') {
     let presetProperties = SolarengineAnalysis.retrievePresetProperties();
     return presetProperties;
@@ -727,6 +746,11 @@ export function setChannel(channel: string) {
 export function authorizationCompleted() {
   if (harmonyPlatform()) HarmonySolarengineAnalysis.authorizationCompleted();
   else log(`"authorizationCompleted" not supported in iOS  or Android device`);
+}
+export function setInternalLogEnabled(enabled: boolean) {
+  if (harmonyPlatform())
+    HarmonySolarengineAnalysis.setInternalLogEnabled(enabled);
+  else log(`"setInternalLogEnabled" not supported in iOS or Android device`);
 }
 export function requestPermissionsFromUser(callback: (status: number) => void) {
   if (harmonyPlatform())

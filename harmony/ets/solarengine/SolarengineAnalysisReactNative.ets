@@ -254,11 +254,21 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
     try {
       const solarEngineConfig = new SolarEngineConfig();
+      const localConfig = config as Record<string, Object>;
+      const harmonyConfig =
+        localConfig[SolarEngineConfigConstant.Harmony] as Record<string, number> | undefined;
+
       solarEngineConfig.isDebugMode = config[SolarEngineConfigConstant.IsDebugModel];
       solarEngineConfig.logEnabled = config[SolarEngineConfigConstant.LogEnabled];
       solarEngineConfig.enableDeferredDeeplink = config[SolarEngineConfigConstant.EnableDelayDeeplink];
-      solarEngineConfig.authorizationTimeout =
-        config[SolarEngineConfigConstant.Harmony][SolarEngineConfigConstant.AuthorizationTimeout];
+      if (
+        harmonyConfig &&
+        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined
+      ) {
+        solarEngineConfig.authorizationTimeout = Number(
+          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout]
+        );
+      }
       solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G];
       solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6];
 
@@ -808,6 +818,17 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       SolarEngineManager.authorizationCompleted();
     } catch (error) {
       console.error(`${_SolarEngineLog} authorizationCompleted failed:`, error);
+    }
+  }
+
+  setInternalLogEnabled(enabled: boolean) {
+    if (_log) {
+      console.log(_SolarEngineLog, "setInternalLogEnabled", enabled);
+    }
+    try {
+      SolarEngineManager.setInternalLogEnabled(enabled);
+    } catch (error) {
+      console.error(`${_SolarEngineLog} setInternalLogEnabled failed:`, error);
     }
   }
 

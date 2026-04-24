@@ -30,7 +30,7 @@ SolarengineAnalysisReactNative::SolarengineAnalysisReactNative(const ArkTSTurboM
         ARK_METHOD_METADATA(unsetSuperProperty, 1),
         ARK_METHOD_METADATA(clearSuperProperties, 0),
         ARK_METHOD_METADATA(retrievePresetProperties, 1),
-        ARK_METHOD_METADATA(setPresetProperties, 1),
+        ARK_METHOD_METADATA(setPresetProperties, 2),
 
         ARK_METHOD_METADATA(userPropertiesInit, 1),
         ARK_METHOD_METADATA(userPropertiesUpdate, 1),
@@ -65,7 +65,8 @@ SolarengineAnalysisReactNative::SolarengineAnalysisReactNative(const ArkTSTurboM
 
         ARK_METHOD_METADATA(currentPlatform, 0),
         ARK_METHOD_METADATA(authorizationCompleted, 0),
-        ARK_METHOD_METADATA(requestPermissionsFromUser, 0),
+        ARK_METHOD_METADATA(setInternalLogEnabled, 1),
+        ARK_METHOD_METADATA(requestPermissionsFromUser, 1),
 
     };
 }
