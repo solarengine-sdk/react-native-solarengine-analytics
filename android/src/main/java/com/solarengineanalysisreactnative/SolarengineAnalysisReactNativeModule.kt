@@ -3,7 +3,6 @@ package com.solarengineanalysisreactnative
 
 import android.net.Uri
 import android.util.Log
-import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.ReactApplicationContext
@@ -30,10 +29,12 @@ import com.reyun.solar.engine.infos.SELoginEventModel
 import com.reyun.solar.engine.infos.SEOrderEventModel
 import com.reyun.solar.engine.infos.SEPurchaseEventModel
 import com.reyun.solar.engine.infos.SERegisterEventModel
+import com.reyun.solar.engine.remoteconfig.OnRemoteConfigReceivedData
+import com.reyun.solar.engine.remoteconfig.OnRemoteConfigReceivedGenericsData
+import com.reyun.solar.engine.remoteconfig.RemoteConfigManager
 import com.reyun.solar.engine.tracker.SEUserDeleteType
 import org.json.JSONArray
 import org.json.JSONObject
-import java.lang.reflect.Method
 
 @ReactModule(name = SolarengineAnalysisReactNativeModule.NAME)
 class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext) :
@@ -94,6 +95,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         "Method: $method invoked \n Log Content:  $obj"
       )
     }
+  }
+
+  private fun remoteConfigDisabledMessage(apiName: String): String {
+    return "RemoteConfig is disabled. Enable SolarengineAnalysisGradleProperties_EnableRemoteConfig=true before calling $apiName."
   }
 
 
@@ -215,7 +220,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   @ReactMethod
   override fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
 
-    log("appKey: $appKey","initialize")
+    log(
+      "appKey: $appKey, configMap: $configMap, remoteConfigMap: $remoteConfigMap, customDomainMap: $customDomainMap",
+      "initialize"
+    )
     log("", "initialization beign====")
 
     if (appKey.isEmpty()) {
@@ -278,10 +286,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       seConfig.withCustomDomain(customDomain)
     }
 
-    if (remoteConfigMap?.hasKey("enabled") == true) {
-      val remote = RemoteConfig()
-      val enabled = remoteConfigMap.getBoolean("enabled")
-      remote.enable = enabled
+	    if (remoteConfigMap?.hasKey("enabled") == true) {
+	      val remote = RemoteConfig()
+	      val enabled = remoteConfigMap.getBoolean("enabled")
+	      remote.setEnable(enabled)
 
       var mergeType: RemoteConfig.MergeType = RemoteConfig.MergeType.WITH_CACHE
       if (remoteConfigMap.hasKey("mergeType")) {
@@ -292,35 +300,35 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
           else -> log("mergeType is invalid", "initialize")
         }
       }
-      remote.mergeType = mergeType
+	      remote.setMergeType(mergeType)
 
       val customIDProperties = remoteConfigMap.getMap("customIDProperties")
-      if (customIDProperties is ReadableMap && !remoteConfigMap.isNull("customIDProperties")) {
-        val jObject = SolarEngineRNUtils.convertMapToJson(customIDProperties)
-        remote.customIDProperties = jObject
-      } else {
-        error("customIDProperties is invalid", "initialize")
-      }
+	      if (customIDProperties is ReadableMap && !remoteConfigMap.isNull("customIDProperties")) {
+	        val jObject = SolarEngineRNUtils.convertMapToJson(customIDProperties)
+	        remote.setCustomIDProperties(jObject)
+	      } else {
+	        error("customIDProperties is invalid", "initialize")
+	      }
 
       val customIDEventProperties = remoteConfigMap.getMap("customIDEventProperties")
       if (customIDEventProperties is ReadableMap && !remoteConfigMap.isNull
           ("customIDEventProperties")
-      ) {
-        val jObject = SolarEngineRNUtils.convertMapToJson(customIDEventProperties)
-        remote.customIDEventProperties = jObject
-      } else {
-        error("customIDEventProperties is invalid", "initialize")
-      }
+	      ) {
+	        val jObject = SolarEngineRNUtils.convertMapToJson(customIDEventProperties)
+	        remote.setCustomIDEventProperties(jObject)
+	      } else {
+	        error("customIDEventProperties is invalid", "initialize")
+	      }
 
       val customIDUserProperties = remoteConfigMap.getMap("customIDUserProperties")
       if (customIDUserProperties is ReadableMap && !remoteConfigMap.isNull
           ("customIDUserProperties")
-      ) {
-        val jObject = SolarEngineRNUtils.convertMapToJson(customIDUserProperties)
-        remote.customIDUserProperties = jObject
-      } else {
-        error("customIDUserProperties is invalid", "initialize")
-      }
+	      ) {
+	        val jObject = SolarEngineRNUtils.convertMapToJson(customIDUserProperties)
+	        remote.setCustomIDUserProperties(jObject)
+	      } else {
+	        error("customIDUserProperties is invalid", "initialize")
+	      }
       seConfig.withRemoteConfig(remote)
     }
 
@@ -794,28 +802,21 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
   @ReactMethod
   override fun setDefaultConfig(configs:ReadableArray){
-    log("configs: $configs","setDefaultConfig")
-    val jsonArray = SolarEngineRNUtils.convertArrayToJson(configs)
-    log("jsonArray: $jsonArray","setDefaultConfig")
+    //这里需要先toString() 然后再转JSONArray，否则会导致type为2时，是double类型（正确需要int类型才能set成功）
+    var jsonString=SolarEngineRNUtils.convertArrayToJson(configs).toString();
+    val jsonArray = JSONArray(jsonString)
 
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
       try {
-        val remoteConfigManagerClass = Class.forName("com.reyun.remote.config.RemoteConfigManager")
-
-        log("The type of remoteConfigManagerClass is ${remoteConfigManagerClass::class}","setDefaultConfig")
-
-        val getInstanceMethod: Method = remoteConfigManagerClass.getMethod("getInstance")
-        val remoteConfigManagerInstance = getInstanceMethod.invoke(null)
-        val setRemoteDefaultConfigMethod: Method =
-          remoteConfigManagerClass.getMethod("setRemoteDefaultConfig", JSONArray::class.java)
-        setRemoteDefaultConfigMethod.invoke(remoteConfigManagerInstance, jsonArray)
+        RemoteConfigManager.getInstance().setRemoteDefaultConfig(jsonArray);
+        log("setRemoteDefaultConfig", "setDefaultConfig")
       } catch (e: Exception) {
-        error("RemoteConfig SDK not exist, please set the sdk file correctly","setDefaultConfig")
+        error(remoteConfigDisabledMessage("setDefaultConfig"),"setDefaultConfig")
         e.printStackTrace()
       }
     }else{
-      error("You had disable the RemoteConfig","setDefaultConfig")
+      error(remoteConfigDisabledMessage("setDefaultConfig"),"setDefaultConfig")
     }
 
   }
@@ -827,19 +828,15 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
       try {
-        val remoteConfigManagerClass = Class.forName("com.reyun.remote.config.RemoteConfigManager")
-        val getInstanceMethod: Method = remoteConfigManagerClass.getMethod("getInstance")
-        val remoteConfigManagerInstance = getInstanceMethod.invoke(null)
-        val setRemoteConfigEventPropertiesMethod: Method =
-          remoteConfigManagerClass.getMethod("setRemoteConfigEventProperties", JSONObject::class.java)
-        setRemoteConfigEventPropertiesMethod.invoke(remoteConfigManagerInstance, jObject)
+        RemoteConfigManager.getInstance().setRemoteConfigEventProperties(jObject);
+        log("setRemoteConfigEventProperties success", "setRemoteConfigEventProperties")
       } catch (e: Exception) {
-        error("RemoteConfig SDK not exist, please set the sdk file correctly",
+        error(remoteConfigDisabledMessage("setRemoteConfigEventProperties"),
           "setRemoteConfigEventProperties")
         e.printStackTrace()
       }
     }else{
-      error("You had disable the RemoteConfig, please set the sdk file correctly",
+      error(remoteConfigDisabledMessage("setRemoteConfigEventProperties"),
         "setRemoteConfigEventProperties")
     }
   }
@@ -851,19 +848,15 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
       try {
-        val remoteConfigManagerClass = Class.forName("com.reyun.remote.config.RemoteConfigManager")
-        val getInstanceMethod: Method = remoteConfigManagerClass.getMethod("getInstance")
-        val remoteConfigManagerInstance = getInstanceMethod.invoke(null)
-        val setRemoteConfigUserPropertiesMethod: Method =
-          remoteConfigManagerClass.getMethod("setRemoteConfigUserProperties", JSONObject::class.java)
-        setRemoteConfigUserPropertiesMethod.invoke(remoteConfigManagerInstance, jObject)
+        RemoteConfigManager.getInstance().setRemoteConfigUserProperties(jObject);
+        log("setRemoteConfigUserProperties success", "setRemoteConfigUserProperties")
       } catch (e: Exception) {
-        error("RemoteConfig SDK not exist, please set the sdk file correctly",
+        error(remoteConfigDisabledMessage("setRemoteConfigUserProperties"),
           "setRemoteConfigUserProperties")
         e.printStackTrace()
       }
     }else{
-      error("You had disable the RemoteConfig","setRemoteConfigUserProperties")
+      error(remoteConfigDisabledMessage("setRemoteConfigUserProperties"),"setRemoteConfigUserProperties")
     }
   }
   @ReactMethod
@@ -873,12 +866,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
       try {
-        val remoteConfigManagerClass = Class.forName("com.reyun.remote.config.RemoteConfigManager")
-        val getInstanceMethod: Method = remoteConfigManagerClass.getMethod("getInstance")
-        val remoteConfigManagerInstance = getInstanceMethod.invoke(null)
-        val fastFetchRemoteConfigMethod: Method = remoteConfigManagerClass.
-        getMethod("fastFetchRemoteConfig", String::class.java)
-        val result = fastFetchRemoteConfigMethod.invoke(remoteConfigManagerInstance, key)
+        val result = RemoteConfigManager.getInstance().fastFetchRemoteConfig(key);
         var reactnativeData = result
         if (result is JSONObject){
           reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
@@ -887,13 +875,13 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         completion.invoke(reactnativeData)
       } catch (e: Exception) {
         e.printStackTrace()
-        error("RemoteConfig SDK not exist, please set the sdk file correctly",
+        error(remoteConfigDisabledMessage("fastFetchRemoteConfigWithKey"),
           "fastFetchRemoteConfigWithKey")
 
         completion.invoke(null)
       }
     }else{
-      error("You had disable the RemoteConfig","fastFetchRemoteConfigWithKey")
+      error(remoteConfigDisabledMessage("fastFetchRemoteConfigWithKey"),"fastFetchRemoteConfigWithKey")
       completion.invoke(null)
     }
   }
@@ -904,59 +892,42 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
       try {
-        val remoteConfigManagerClass = Class.forName("com.reyun.remote.config.RemoteConfigManager")
-        val getInstanceMethod: Method = remoteConfigManagerClass.getMethod("getInstance")
-        val remoteConfigManagerInstance = getInstanceMethod.invoke(null)
-        val fastFetchRemoteConfigMethod: Method = remoteConfigManagerClass.
-        getMethod("fastFetchRemoteConfig")
-        val result = fastFetchRemoteConfigMethod.invoke(remoteConfigManagerInstance)
-        log("will eject completion,result: $result ","fastFetchRemoteConfig")
+
+        val result = RemoteConfigManager.getInstance().fastFetchRemoteConfig()
+        log("result fastFetchRemoteConfig: $result", "fastFetchRemoteConfig")
         val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
         completion.invoke(reactnativeData)
       } catch (e: Exception) {
         e.printStackTrace()
-        error("RemoteConfig SDK not exist, please set the sdk file correctly",
+        error(remoteConfigDisabledMessage("fastFetchRemoteConfig"),
           "fastFetchRemoteConfig")
         completion.invoke(null)
       }
     }else{
-      error("You had disable the RemoteConfig","fastFetchRemoteConfig")
+      error(remoteConfigDisabledMessage("fastFetchRemoteConfig"),"fastFetchRemoteConfig")
       completion.invoke(null)
     }
 
-  }
-  interface OnRemoteConfigReceivedData {
-    fun onResult(result: Any?)
-  }
-  interface KotlinOnRemoteConfigReceivedData {
-    fun onResult(result: Any?)
   }
   @ReactMethod
   override fun asyncFetchRemoteConfigWithKey(key:String, completion: Callback) {
     log("key: $key","asyncFetchRemoteConfigWithKey")
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable){
-
-      SolarEngineRemoteConfig.asyncFetchRemoteConfigWithKey(key,object :com.solarengineanalysisreactnative.OnRemoteConfigReceivedData{
+      RemoteConfigManager.getInstance().asyncFetchRemoteConfig(key, object : OnRemoteConfigReceivedData {
         override fun onResult(result: Any?) {
-          // 处理结果
-          if (result == null){
-            log("result is null", method = "asyncFetchRemoteConfigWithKey");
+          log("result: $result", "asyncFetchRemoteConfigWithKey")
+          if (result is JSONObject){
+            val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
+            completion.invoke(reactnativeData)
           }else{
-            log("result: $result ,  type is: ${result::class}","asyncFetchRemoteConfigWithKey")
-            if (result is JSONObject){
-              val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
-              completion.invoke(reactnativeData)
-            }else{
-              completion.invoke(result)
-            }
+            completion.invoke(result)
           }
 
         }
       })
-
     }else{
-      error("You had disable the RemoteConfig","asyncFetchRemoteConfigWithKey")
+      error(remoteConfigDisabledMessage("asyncFetchRemoteConfigWithKey"),"asyncFetchRemoteConfigWithKey")
       completion.invoke(null)
     }
   }
@@ -982,15 +953,15 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     log("", "asyncFetchRemoteConfig")
     val enable = SolarEngineSingleton.getInstance().enableRemoteConfig()
     if (enable) {
-      SolarEngineRemoteConfig.asyncFetchRemoteConfig(object : com.solarengineanalysisreactnative
-      .OnRemoteConfigReceivedGenericsData<JSONObject> {
+      RemoteConfigManager.getInstance().asyncFetchRemoteConfig(object : OnRemoteConfigReceivedGenericsData<JSONObject> {
         override fun onResult(result: JSONObject) {
+          log("result: $result", "asyncFetchRemoteConfig")
           val reactnativeData = SolarEngineRNUtils.convertJsonToMap(result as? JSONObject)
           completion.invoke(reactnativeData)
         }
       })
     }else{
-      error("You had disable the RemoteConfig","asyncFetchRemoteConfig")
+      error(remoteConfigDisabledMessage("asyncFetchRemoteConfig"),"asyncFetchRemoteConfig")
       completion.invoke(null)
     }
 
