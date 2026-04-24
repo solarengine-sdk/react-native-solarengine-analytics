@@ -45,12 +45,12 @@ export function objectItem(name: string, value: Object): ConfigItem {
   assert(value != null, 'the value should not be null');
   assert(value !== undefined, 'the value should not be undefined');
 
-  const jsonString = JSON.stringify(value);
-  log('objectItem, jsonString: ' + jsonString);
+
+  log('objectItem, jsonString: ' + JSON.stringify(value));
 
   let item = new ConfigItem();
   item.name = name;
-  item.value = jsonString;
+  item.value = value;
   item.type = ConfigItemType.Json;
   return item;
 }
@@ -65,6 +65,6 @@ export enum ConfigItemType {
 
 export class ConfigItem {
   name: string | null = null;
-  value: string | boolean | number | null = null;
+  value: string | boolean | number | object | null = null;
   type: ConfigItemType = ConfigItemType.Unknown;
 }
