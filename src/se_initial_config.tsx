@@ -13,8 +13,7 @@ export type se_initial_config = {
   //If your application operates in the European Union region, it needs to comply with the regulations of the EU privacy protection law (regarding GDPR). Please be sure to set isGDPRArea(true) when the user refuses to collect sensitive device information. The default is to collect.
   enableGDPR?: boolean;
 
-  //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether Google is allowed to use their data for personalized advertising into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
-  enablePersonalizedAd?: boolean;
+  
 
   //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether they agree to send their data to Google into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
   enableUserData?: boolean;
@@ -32,6 +31,12 @@ export type se_initial_config = {
   android?: {
     //If you need to use meta attribution, set the meta appid here.
     metaAppId?: string;
+
+    //这里 bridge层找的是android->enablePersonalizedAd和android->enableUserData，所以需要放在android里
+    //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether Google is allowed to use their data for personalized advertising into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
+    enablePersonalizedAd?: boolean;
+      //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether they agree to send their data to Google into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
+     enableUserData?: boolean;
   };
   harmony?: {
     authorizationTimeout?: number;
