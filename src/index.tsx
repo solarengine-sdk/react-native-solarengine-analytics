@@ -737,8 +737,8 @@ export function setGaid(gaid: string) {
   }
 }
 export function setChannel(channel: string) {
-  if (Platform.OS === 'ios') {
-    log(`"setChannel" not supported in iOS device`);
+  if (Platform.OS !== 'android') {
+    log(`"setChannel" not supported in iOS or harmony device`);
   } else {
     SolarengineAnalysis.setChannel(channel);
   }

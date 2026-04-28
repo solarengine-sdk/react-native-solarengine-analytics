@@ -110,7 +110,7 @@ export interface Spec extends TurboModule {
   // Android Specific
   setOaid(oaid?: string): void; //harmony
   setGaid(gaid: string): void; //only android
-  setChannel(channel: string): void; //harmony
+  setChannel(channel: string): void; //only android
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>(
