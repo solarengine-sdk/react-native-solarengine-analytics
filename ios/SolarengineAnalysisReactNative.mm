@@ -1263,22 +1263,34 @@ RCT_EXPORT_METHOD(setChannel:(NSString *)channel) {
     int type = [[dict objectForKey:@"type"] intValue];
     if (type == 4) {
       @try {
-        NSError *error = nil;
-        NSString *value = [NSString stringWithFormat:@"%@",[dict objectForKey:@"value"]];
-        id jsonObject = [NSJSONSerialization JSONObjectWithData:[value dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
-        if (error) {
-          NSString *log = [NSString stringWithFormat:@"Error converting string to JSONObject: %@", error];
-          [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
-        } else {
+        id rawValue = [dict objectForKey:@"value"];
+        id normalizedValue = rawValue;
 
+        if ([rawValue isKindOfClass:[NSString class]]) {
+          NSError *error = nil;
+          NSData *jsonData = [(NSString *)rawValue dataUsingEncoding:NSUTF8StringEncoding];
+          normalizedValue = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+          if (error) {
+            NSString *log = [NSString stringWithFormat:@"Error converting string to JSONObject: %@", error];
+            [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+            normalizedValue = nil;
+          }
+        } else if (![rawValue isKindOfClass:[NSDictionary class]] &&
+                   ![rawValue isKindOfClass:[NSArray class]]) {
+          NSString *log = [NSString stringWithFormat:@"Unsupported json config value type: %@", NSStringFromClass([rawValue class])];
+          [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+          normalizedValue = nil;
+        }
+
+        if (normalizedValue != nil) {
           NSMutableDictionary *tempDict = [NSMutableDictionary new];
           [tempDict addEntriesFromDictionary:dict];
-          [tempDict setObject:jsonObject forKey:@"value"];
-
+          [tempDict setObject:normalizedValue forKey:@"value"];
           [list addObject:tempDict];
         }
       } @catch (NSException *exception) {
-
+        NSString *log = [NSString stringWithFormat:@"Exception normalizing json config: %@", exception];
+        [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
       }@finally {
       }
 
