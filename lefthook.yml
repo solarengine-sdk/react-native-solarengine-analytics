@@ -3,9 +3,11 @@ pre-commit:
   commands:
     lint:
       glob: "*.{js,ts,jsx,tsx}"
+      exclude: '^example/harmonySample/'
       run: npx eslint {staged_files} --fix
     types:
       glob: "*.{js,ts, jsx, tsx}"
+      exclude: '^example/harmonySample/'
       run: npx tsc
 commit-msg:
   parallel: true
