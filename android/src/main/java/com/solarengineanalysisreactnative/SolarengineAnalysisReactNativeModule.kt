@@ -349,7 +349,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     if (remoteConfigMap?.hasKey("enabled") == true) {
       val remote = RemoteConfig()
       val enabled = remoteConfigMap.getBoolean("enabled")
-      remote.enable=enabled;
+      remote.setEnable(enabled)
 
       var mergeType: RemoteConfig.MergeType = RemoteConfig.MergeType.WITH_CACHE
       if (remoteConfigMap.hasKey("mergeType")) {
