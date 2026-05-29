@@ -367,7 +367,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       override fun onAttributionSuccess(attribution: JSONObject) {
         //获取归因结果成功时执行的动作
         log("attribution: $attribution","onAttributionSuccess")
-        if (SolarEngineSingleton.getInstance().attribution != null){
+        val singleton = SolarEngineSingleton.getInstance()
+        val attributionCallback = synchronized(singleton) {
+          val callback = singleton.attribution
+          singleton.attribution = null
+          callback
+        }
+        if (attributionCallback != null){
+
           // convert to JS object
           val readableMap = Arguments.createMap()
           val readableValueMap = Arguments.createMap()
@@ -377,8 +384,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
           readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-          SolarEngineSingleton.getInstance().attribution!!.invoke(readableMap)
-          SolarEngineSingleton.getInstance().attribution = null
+          attributionCallback.invoke(readableMap)
+        }else{
+          log("attribution callback is null","onAttributionSuccess")
         }
       }
 
@@ -386,7 +394,13 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         //获取归因结果失败时执行的动作
         error("errorCode: $errorCode","onAttributionFail")
 
-        if (SolarEngineSingleton.getInstance().attribution != null){
+        val singleton = SolarEngineSingleton.getInstance()
+        val attributionCallback = synchronized(singleton) {
+          val callback = singleton.attribution
+          singleton.attribution = null
+          callback
+        }
+        if (attributionCallback != null){
 
           log("attribution callback not null","onAttributionFail")
 
@@ -397,8 +411,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
           readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-          SolarEngineSingleton.getInstance().attribution!!.invoke(readableMap)
-          SolarEngineSingleton.getInstance().attribution = null
+          attributionCallback.invoke(readableMap)
         }else{
           log("attribution callback is null","onAttributionFail")
         }
