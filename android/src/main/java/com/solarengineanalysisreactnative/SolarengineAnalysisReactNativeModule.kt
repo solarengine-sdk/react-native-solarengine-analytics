@@ -168,6 +168,8 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val seSdkSource = SeSdkSource()
     seSdkSource.setSdkType("reactnative")
     seSdkSource.setSubLibVersion(pluginVersion)
+    SolarEngineManager.getInstance().setSeSdkSource(seSdkSource)
+
   }
 
   @ReactMethod
