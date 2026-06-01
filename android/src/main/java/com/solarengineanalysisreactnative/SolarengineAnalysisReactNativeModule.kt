@@ -310,6 +310,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableUserData = androidConfigs.getBoolean("enableUserData")
       seConfig.adUserDataEnabled(enableUserData)
     }
+    if (androidConfigs?.hasKey("isOAIDEnabled") == true) {
+      val isOAIDEnabled = androidConfigs.getBoolean("isOAIDEnabled")
+      seConfig.isOAIDEnabled(isOAIDEnabled)
+    }
     /*
     ts model keys:
       enable: boolean;
