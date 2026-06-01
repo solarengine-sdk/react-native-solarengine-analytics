@@ -1203,9 +1203,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(retrievePresetProperties){
   [self _setPresetProperties:type properties:properties];
 }
 #else
-RCT_EXPORT_METHOD(setPresetProperties:(int)eventType
+RCT_EXPORT_METHOD(setPresetProperties:(NSString *)eventType
                   properties:(NSDictionary *)properties){
-  [self _setPresetProperties:eventType properties:properties];
+  int type = [eventType intValue];
+  [self _setPresetProperties:type properties:properties];
 }
 #endif
 
