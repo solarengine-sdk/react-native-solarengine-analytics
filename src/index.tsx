@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.8';
+const SolarEnginePluginVersion = '1.6.9';
 
 import type {
   SolarEngineInitiateOptions,
