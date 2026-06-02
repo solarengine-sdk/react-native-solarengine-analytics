@@ -32,6 +32,8 @@ export type se_initial_config = {
   android?: {
     //If you need to use meta attribution, set the meta appid here.
     metaAppId?: string;
+    //Whether to enable OAID collection. Android only.
+    isOAIDEnabled?: boolean;
   };
 
   /************** iOS only, if need *****************/

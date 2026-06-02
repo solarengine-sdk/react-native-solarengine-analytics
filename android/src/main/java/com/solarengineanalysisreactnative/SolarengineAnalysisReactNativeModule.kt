@@ -12,7 +12,7 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
-import com.reyun.solar.engine.DelayDeepLinkCallback
+import com.reyun.solar.engine.DeferredDeepLinkCallback
 import com.reyun.solar.engine.OnAttributionListener
 import com.reyun.solar.engine.SeSdkSource
 import com.reyun.solar.engine.SolarEngineConfig
@@ -96,6 +96,70 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
 
+  private fun setAttributionCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.attribution = callback
+    }
+  }
+
+  private fun takeAttributionCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.attribution
+      singleton.attribution = null
+      callback
+    }
+  }
+
+  private fun setDeeplinkCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.deeplink = callback
+    }
+  }
+
+  private fun takeDeeplinkCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.deeplink
+      singleton.deeplink = null
+      callback
+    }
+  }
+
+  private fun setDeferredDeeplinkCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.deferredDeeplink = callback
+    }
+  }
+
+  private fun takeDeferredDeeplinkCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.deferredDeeplink
+      singleton.deferredDeeplink = null
+      callback
+    }
+  }
+
+  private fun setInitiateCompleteCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.initiateComplete = callback
+    }
+  }
+
+  private fun takeInitiateCompleteCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.initiateComplete
+      singleton.initiateComplete = null
+      callback
+    }
+  }
+
 
   @ReactMethod
   override fun setReactNativeBridgeVersion(pluginVersion: String) {
@@ -104,6 +168,8 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     val seSdkSource = SeSdkSource()
     seSdkSource.setSdkType("reactnative")
     seSdkSource.setSubLibVersion(pluginVersion)
+    SolarEngineManager.getInstance().setSeSdkSource(seSdkSource)
+
   }
 
   @ReactMethod
@@ -124,19 +190,18 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   override fun registerAttribution(attribution: Callback) {
 
     log("","registerAttribution")
-    val singleton = SolarEngineSingleton.getInstance()
-    singleton.attribution = attribution
+    setAttributionCallback(attribution)
   }
   @ReactMethod
   override fun registerDeeplink(deeplink: Callback) {
     log("","registerDeeplink")
 
-    val singleton = SolarEngineSingleton.getInstance()
-    singleton.deeplink = deeplink
+    setDeeplinkCallback(deeplink)
     SolarEngineManager.getInstance().setDeepLinkCallback { code, deeplinkInfo ->
 
       log("code: $code","setDeepLinkCallback")
-      if (SolarEngineSingleton.getInstance().deeplink != null){
+      val deeplinkCallback = takeDeeplinkCallback()
+      if (deeplinkCallback != null){
         // convert to JS object
         val readableMap = Arguments.createMap()
         val readableValueMap = Arguments.createMap()
@@ -159,8 +224,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
         readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-        SolarEngineSingleton.getInstance().deeplink!!.invoke(readableMap)
-        SolarEngineSingleton.getInstance().deeplink = null
+        deeplinkCallback.invoke(readableMap)
+      }else{
+        log("deeplink callback is null","setDeepLinkCallback")
       }
     }
   }
@@ -168,14 +234,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   override fun registerDeferredDeeplink(deferredDeeplink: Callback) {
     log("","registerDeferredDeeplink")
 
-    val singleton = SolarEngineSingleton.getInstance()
-    singleton.deferredDeeplink = deferredDeeplink
+    setDeferredDeeplinkCallback(deferredDeeplink)
 
-    SolarEngineManager.getInstance().setDelayDeepLinkCallback(object : DelayDeepLinkCallback {
+    SolarEngineManager.getInstance().setDeferredDeepLinkCallback(object: DeferredDeepLinkCallback {
       override fun onReceivedSuccess(result: JSONObject) {
         //回调成功
         log("result: $result","onReceivedSuccess")
-        if (SolarEngineSingleton.getInstance().deferredDeeplink != null){
+        val deferredDeeplinkCallback = takeDeferredDeeplinkCallback()
+        if (deferredDeeplinkCallback != null){
           // convert to JS object
           val readableMap = Arguments.createMap()
           val readableValueMap = Arguments.createMap()
@@ -185,8 +251,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
           readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-          SolarEngineSingleton.getInstance().deferredDeeplink!!.invoke(readableMap)
-          SolarEngineSingleton.getInstance().deferredDeeplink = null
+          deferredDeeplinkCallback.invoke(readableMap)
+        }else{
+          log("deferred deeplink callback is null","onReceivedSuccess")
         }
       }
 
@@ -195,12 +262,16 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         error("errorCode: $errorCode","onReceivedFailed")
 
         // convert to JS object
-        val readableMap = Arguments.createMap()
-        val readableValueMap = Arguments.createMap()
-        readableValueMap.putInt("reactnative_code", errorCode)
-        readableMap.putMap("android_object_wrapper_key", readableValueMap)
-        SolarEngineSingleton.getInstance().deferredDeeplink!!.invoke(readableMap)
-        SolarEngineSingleton.getInstance().deferredDeeplink = null
+        val deferredDeeplinkCallback = takeDeferredDeeplinkCallback()
+        if (deferredDeeplinkCallback != null){
+          val readableMap = Arguments.createMap()
+          val readableValueMap = Arguments.createMap()
+          readableValueMap.putInt("reactnative_code", errorCode)
+          readableMap.putMap("android_object_wrapper_key", readableValueMap)
+          deferredDeeplinkCallback.invoke(readableMap)
+        }else{
+          log("deferred deeplink callback is null","onReceivedFailed")
+        }
 
       }
     })
@@ -209,8 +280,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   override fun registerInitiateComplete(initiateComplete: Callback) {
     log("","registerInitiateComplete")
 
-    val singleton = SolarEngineSingleton.getInstance()
-    singleton.initiateComplete = initiateComplete
+    setInitiateCompleteCallback(initiateComplete)
   }
   @ReactMethod
   override fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
@@ -241,6 +311,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     if (androidConfigs?.hasKey("enableUserData") == true) {
       val enableUserData = androidConfigs.getBoolean("enableUserData")
       seConfig.adUserDataEnabled(enableUserData)
+    }
+    if (androidConfigs?.hasKey("isOAIDEnabled") == true) {
+      val isOAIDEnabled = androidConfigs.getBoolean("isOAIDEnabled")
+      seConfig.isOAIDEnabled(isOAIDEnabled)
     }
     /*
     ts model keys:
@@ -281,7 +355,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     if (remoteConfigMap?.hasKey("enabled") == true) {
       val remote = RemoteConfig()
       val enabled = remoteConfigMap.getBoolean("enabled")
-      remote.enable = enabled
+      remote.setEnable(enabled)
 
       var mergeType: RemoteConfig.MergeType = RemoteConfig.MergeType.WITH_CACHE
       if (remoteConfigMap.hasKey("mergeType")) {
@@ -361,13 +435,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableDeferredDeeplink = configMap.getBoolean("enableDeferredDeeplink")
       seConfig.enableDeferredDeeplink = enableDeferredDeeplink
     }
-
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
     solarEngineConfig.setOnAttributionListener(object : OnAttributionListener {
       override fun onAttributionSuccess(attribution: JSONObject) {
         //获取归因结果成功时执行的动作
         log("attribution: $attribution","onAttributionSuccess")
-        if (SolarEngineSingleton.getInstance().attribution != null){
+        val attributionCallback = takeAttributionCallback()
+        if (attributionCallback != null){
+
           // convert to JS object
           val readableMap = Arguments.createMap()
           val readableValueMap = Arguments.createMap()
@@ -377,8 +452,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
           readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-          SolarEngineSingleton.getInstance().attribution!!.invoke(readableMap)
-          SolarEngineSingleton.getInstance().attribution = null
+          attributionCallback.invoke(readableMap)
+        }else{
+          log("attribution callback is null","onAttributionSuccess")
         }
       }
 
@@ -386,7 +462,8 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         //获取归因结果失败时执行的动作
         error("errorCode: $errorCode","onAttributionFail")
 
-        if (SolarEngineSingleton.getInstance().attribution != null){
+        val attributionCallback = takeAttributionCallback()
+        if (attributionCallback != null){
 
           log("attribution callback not null","onAttributionFail")
 
@@ -397,8 +474,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
           readableMap.putMap("android_object_wrapper_key", readableValueMap)
 
-          SolarEngineSingleton.getInstance().attribution!!.invoke(readableMap)
-          SolarEngineSingleton.getInstance().attribution = null
+          attributionCallback.invoke(readableMap)
         }else{
           log("attribution callback is null","onAttributionFail")
         }
@@ -410,8 +486,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       context, appKey, solarEngineConfig
     ) { code ->
 //0: success
-      SolarEngineSingleton.getInstance().initiateComplete?.invoke(code)
-      SolarEngineSingleton.getInstance().initiateComplete = null
+      takeInitiateCompleteCallback()?.invoke(code)
 
       val log = "init code: $code"
       log(log, "OnInitializationCallback")

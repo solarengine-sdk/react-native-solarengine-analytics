@@ -23,6 +23,10 @@
 
 
 
+@interface SolarengineAnalysisReactNative ()
+@property (nonatomic, assign) BOOL hasDeliveredInitializeCallback;
+@end
+
 @implementation SolarengineAnalysisReactNative
 RCT_EXPORT_MODULE()
 
@@ -134,7 +138,7 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
                                 nil];
     @throw myException;
   }
-  
+
   SEConfig *seconfig = [[SEConfig alloc] init];
   
   NSDictionary *iosConfigs = config[@"ios"];
@@ -303,12 +307,24 @@ RCT_EXPORT_METHOD(initialize:(NSString *)appKey
 // MARK: - registerInitiateComplete
 - (void)_registerInitiateComplete:(RCTResponseSenderBlock)callback {
   if(callback == nil) return;
+  RCTResponseSenderBlock initialCallback = [callback copy];
+  __weak SolarengineAnalysisReactNative *weakSelf = self;
   [[SolarEngineSDK sharedInstance] setInitCompletedCallback:^(int code) {
-    [SolarengineAnalysisReactNative log:[NSString stringWithFormat:@"SDK init result code = %d",code] method:_cmd];
-    if(callback) {
-      int result = code;
-      callback(@[@(result)]);
+    __strong SolarengineAnalysisReactNative *strongSelf = weakSelf;
+    if (!strongSelf) {
+      return;
     }
+
+    @synchronized (strongSelf) {
+      if (strongSelf.hasDeliveredInitializeCallback) {
+        [SolarengineAnalysisReactNative log:[NSString stringWithFormat:@"skip JS init callback, repeated SDK result code = %d", code] method:_cmd];
+        return;
+      }
+      strongSelf.hasDeliveredInitializeCallback = YES;
+    }
+
+    [SolarengineAnalysisReactNative log:[NSString stringWithFormat:@"will call JS init callback, code = %d", code] method:_cmd];
+    initialCallback(@[@(code)]);
   }];
 }
 
@@ -1187,9 +1203,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(retrievePresetProperties){
   [self _setPresetProperties:type properties:properties];
 }
 #else
-RCT_EXPORT_METHOD(setPresetProperties:(int)eventType
+RCT_EXPORT_METHOD(setPresetProperties:(NSString *)eventType
                   properties:(NSDictionary *)properties){
-  [self _setPresetProperties:eventType properties:properties];
+  int type = [eventType intValue];
+  [self _setPresetProperties:type properties:properties];
 }
 #endif
 
