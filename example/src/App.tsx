@@ -352,14 +352,14 @@ function buildInitialConfig(): se_initial_config {
     enableDebug: false,
     enable2G: true,
     enableGDPR: true,
-    enablePersonalizedAd: true,
-    enableUserData: true,
     enableCoppa: true,
     enableKidsApp: true,
     enableDeferredDeeplink: true,
-    // android: {
-    //   metaAppId: 'place_your_meta_app_here',
-    // },
+    android: {
+      // metaAppId: 'place_your_meta_app_here',
+      enablePersonalizedAd: true,
+      enableUserData: true,
+    },
     ios: {
       attAuthorizationWaitingInterval: 60,
       caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"},{"version":"20211207","caid":"e332a76c29654fcb7f6e6b31ced090c7"}]',

@@ -7,11 +7,8 @@
 #else
 #endif
 
+#import <SolarEngineSDK/SERemoteConfigManager.h>
 
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
-#import <SESDKRemoteConfig/SESDKRemoteConfig.h>
-#else
-#endif
 
 #import "SEWrapperManager.h"
 #import "SolarengineEventAttribute.h"
@@ -183,7 +180,6 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
     seconfig.customDomain = model;
   }
   
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
   
   if (remoteConfig[@"enabled"]) {
     BOOL enabled = [remoteConfig[@"enabled"] boolValue];
@@ -232,9 +228,7 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
   }else{
     [SolarengineAnalysisReactNative logErrorMsg:@"enabled is missing" method:_cmd];
   }
-#else
-  ;
-#endif
+
   
   if (iosConfigs[@"attAuthorizationWaitingInterval"]){
     NSNumber *attAuthorizationWaitingInterval = iosConfigs[@"attAuthorizationWaitingInterval"];
@@ -1278,7 +1272,6 @@ RCT_EXPORT_METHOD(setChannel:(NSString *)channel) {
 #pragma mark - Remote Configs
 -(void)_setDefaultConfig:(NSArray *)configslist{
 //RCT_EXPORT_METHOD(setDefaultConfig:(NSArray *)configslist){
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
   NSString *log = [NSString stringWithFormat:@"invoked, configslist %@",configslist];
   [SolarengineAnalysisReactNative log:log method:_cmd];
 
@@ -1287,22 +1280,34 @@ RCT_EXPORT_METHOD(setChannel:(NSString *)channel) {
     int type = [[dict objectForKey:@"type"] intValue];
     if (type == 4) {
       @try {
-        NSError *error = nil;
-        NSString *value = [NSString stringWithFormat:@"%@",[dict objectForKey:@"value"]];
-        id jsonObject = [NSJSONSerialization JSONObjectWithData:[value dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
-        if (error) {
-          NSString *log = [NSString stringWithFormat:@"Error converting string to JSONObject: %@", error];
-          [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
-        } else {
+        id rawValue = [dict objectForKey:@"value"];
+        id normalizedValue = rawValue;
 
+        if ([rawValue isKindOfClass:[NSString class]]) {
+          NSError *error = nil;
+          NSData *jsonData = [(NSString *)rawValue dataUsingEncoding:NSUTF8StringEncoding];
+          normalizedValue = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+          if (error) {
+            NSString *log = [NSString stringWithFormat:@"Error converting string to JSONObject: %@", error];
+            [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+            normalizedValue = nil;
+          }
+        } else if (![rawValue isKindOfClass:[NSDictionary class]] &&
+                   ![rawValue isKindOfClass:[NSArray class]]) {
+          NSString *log = [NSString stringWithFormat:@"Unsupported json config value type: %@", NSStringFromClass([rawValue class])];
+          [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+          normalizedValue = nil;
+        }
+
+        if (normalizedValue != nil) {
           NSMutableDictionary *tempDict = [NSMutableDictionary new];
           [tempDict addEntriesFromDictionary:dict];
-          [tempDict setObject:jsonObject forKey:@"value"];
-
+          [tempDict setObject:normalizedValue forKey:@"value"];
           [list addObject:tempDict];
         }
       } @catch (NSException *exception) {
-
+        NSString *log = [NSString stringWithFormat:@"Exception normalizing json config: %@", exception];
+        [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
       }@finally {
       }
 
@@ -1310,13 +1315,9 @@ RCT_EXPORT_METHOD(setChannel:(NSString *)channel) {
       [list addObject:dict];
     }
   }
-  [[SESDKRemoteConfig sharedInstance] setDefaultConfig:list];
+  [[SERemoteConfigManager sharedInstance] setDefaultConfig:list];
 
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
 
-#endif
 }
 
 #ifdef RCT_NEW_ARCH_ENABLED
@@ -1332,15 +1333,10 @@ RCT_EXPORT_METHOD(setDefaultConfig:(NSArray *)configslist) {
 -(void)_setRemoteConfigEventProperties:(NSDictionary *)properties{
 
 //RCT_EXPORT_METHOD(setRemoteConfigEventProperties:(NSDictionary *)properties ){
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
 
-  [[SESDKRemoteConfig sharedInstance] setRemoteConfigEventProperties:properties];
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+  [[SERemoteConfigManager sharedInstance] setRemoteConfigEventProperties:properties];
 
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 -(void)setRemoteConfigEventProperties:(NSDictionary *)properties{
@@ -1355,15 +1351,10 @@ RCT_EXPORT_METHOD(setRemoteConfigEventProperties:(NSDictionary *)properties) {
 
 -(void)_setRemoteConfigUserProperties:(NSDictionary *)properties{
 //RCT_EXPORT_METHOD(setRemoteConfigUserProperties:(NSDictionary *)properties){
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
 
-  [[SESDKRemoteConfig sharedInstance] setRemoteConfigUserProperties:properties];
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
+  [[SERemoteConfigManager sharedInstance] setRemoteConfigUserProperties:properties];
 
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 -(void)setRemoteConfigUserProperties:(NSDictionary *)properties{
@@ -1383,9 +1374,8 @@ RCT_EXPORT_METHOD(setRemoteConfigUserProperties:(NSDictionary *)properties) {
 
 - (void)_fastFetchRemoteConfigWithKey:(nonnull NSString *)key callback:(nonnull RCTResponseSenderBlock)completion {
 //-(void)fastFetchRemoteConfigWithKey:(NSString *)key completionHandler:(RCTResponseSenderBlock)completion{
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
 
-  id data = [[SESDKRemoteConfig sharedInstance] fastFetchRemoteConfig:key];
+  id data = [[SERemoteConfigManager sharedInstance] fastFetchRemoteConfig:key];
   NSString *log = [NSString stringWithFormat:@"invoked,key: %@  value: %@",key,data];
   [SolarengineAnalysisReactNative log:log method:_cmd];
 
@@ -1396,13 +1386,6 @@ RCT_EXPORT_METHOD(setRemoteConfigUserProperties:(NSDictionary *)properties) {
       completion(@[]);
     }
   }
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
-  if (completion) {
-      completion(@[]);
-  }
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 - (void)fastFetchRemoteConfigWithKey:(nonnull NSString *)key callback:(nonnull RCTResponseSenderBlock)completion {
@@ -1416,9 +1399,8 @@ RCT_EXPORT_METHOD(fastFetchRemoteConfigWithKey:(nonnull NSString *)key callback:
 #endif
 
 -(void)_fastFetchRemoteConfig:(RCTResponseSenderBlock)completion{
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
 
-  NSDictionary *allData = [[SESDKRemoteConfig sharedInstance] fastFetchRemoteConfig];
+  NSDictionary *allData = [[SERemoteConfigManager sharedInstance] fastFetchRemoteConfig];
   NSString *log = [NSString stringWithFormat:@"invoked configs: %@",allData];
   [SolarengineAnalysisReactNative log:log method:_cmd];
 
@@ -1429,13 +1411,6 @@ RCT_EXPORT_METHOD(fastFetchRemoteConfigWithKey:(nonnull NSString *)key callback:
       completion(@[]);
     }
   }
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
-  if (completion) {
-      completion(@[]);
-  }
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 -(void)fastFetchRemoteConfig:(RCTResponseSenderBlock)completion{
@@ -1451,12 +1426,12 @@ RCT_EXPORT_METHOD(fastFetchRemoteConfig:(RCTResponseSenderBlock)completion) {
 - (void)_asyncFetchRemoteConfigWithKey:(nonnull NSString *)key callback:(nonnull RCTResponseSenderBlock)completion {
 //-(void)asyncFetchRemoteConfigWithKey:(NSString *)key
 //                                     completionHandler:(RCTResponseSenderBlock)completion
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
+
   
   NSString *log = [NSString stringWithFormat:@"invoked, key: %@",key];
   [SolarengineAnalysisReactNative log:log method:_cmd];
 
-  [[SESDKRemoteConfig sharedInstance] asyncFetchRemoteConfig:key completionHandler:^(id  _Nonnull data) {
+  [[SERemoteConfigManager sharedInstance] asyncFetchRemoteConfig:key completionHandler:^(id  _Nonnull data) {
 
     NSString *log = [NSString stringWithFormat:@"%@ : %@",key,data];
     [SolarengineAnalysisReactNative log:log method:_cmd];
@@ -1468,13 +1443,6 @@ RCT_EXPORT_METHOD(fastFetchRemoteConfig:(RCTResponseSenderBlock)completion) {
       }
     }
   }];
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
-  if (completion) {
-      completion(@[]);
-  }
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 - (void)asyncFetchRemoteConfigWithKey:(nonnull NSString *)key callback:(nonnull RCTResponseSenderBlock)completion {
@@ -1489,10 +1457,9 @@ RCT_EXPORT_METHOD(asyncFetchRemoteConfigWithKey:(nonnull NSString *)key callback
 
 
 -(void)_asyncFetchRemoteConfig:(RCTResponseSenderBlock)completion{
-#if __has_include(<SESDKRemoteConfig/SESDKRemoteConfig.h>)
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
 
-  [[SESDKRemoteConfig sharedInstance] asyncFetchRemoteConfigWithCompletionHandler:^(NSDictionary * _Nonnull dict) {
+  [[SERemoteConfigManager sharedInstance] asyncFetchRemoteConfigWithCompletionHandler:^(NSDictionary * _Nonnull dict) {
     NSString *log = [NSString stringWithFormat:@"dict: %@",dict];
     [SolarengineAnalysisReactNative log:log method:_cmd];
     if (completion) {
@@ -1503,11 +1470,7 @@ RCT_EXPORT_METHOD(asyncFetchRemoteConfigWithKey:(nonnull NSString *)key callback
       }
     }
    }];
-#else
-  NSString *log = @"SESDKRemoteConfig SDK is missing";
-  [SolarengineAnalysisReactNative logErrorMsg:log method:_cmd];
 
-#endif
 }
 #ifdef RCT_NEW_ARCH_ENABLED
 -(void)asyncFetchRemoteConfig:(RCTResponseSenderBlock)completion{

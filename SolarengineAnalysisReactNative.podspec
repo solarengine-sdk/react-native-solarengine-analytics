@@ -10,7 +10,6 @@ solar_engine_pod_name = "SolarEngineSDKiOSInter"
 solar_engine_pod_name = isMainlandChain ? "SolarEngineSDK" : "SolarEngineSDKiOSInter"
 
 ENV['SOLARENGINE_IOS_SDK_VERSION'] ||= ''
-ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] ||= 'false'
 
 # 尝试在 SDK 目录和当前工作目录查找配置文件
 possible_config_paths = [
@@ -28,14 +27,11 @@ if config_path
   puts "SolarEngine iOS sdk specialized config file found at: #{config_path}"
   config = JSON.parse(File.read(config_path))
   ios_sdk_version = config['platforms'] && config['platforms']['ios'] && config['platforms']['ios']['sdkVersion']
-  disable_remote_config = config['disableRemoteConfig']
   ENV['SOLARENGINE_IOS_SDK_VERSION'] = ios_sdk_version
-  ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] = disable_remote_config ? 'true' : 'false'
 else
   puts "SolarEngine iOS sdk specialized config file not found"
 end
 
-puts "SolarEngine DisableRemoteConfig value: #{ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG']}"
 puts "SolarEngine iOS sdk version: #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
 
 Pod::Spec.new do |s|
@@ -61,19 +57,11 @@ Pod::Spec.new do |s|
   # 判断 SOLARENGINE_IOS_SDK_VERSION 是否为空字符串
   if ENV['SOLARENGINE_IOS_SDK_VERSION'] && !ENV['SOLARENGINE_IOS_SDK_VERSION'].strip.empty?
     puts "SolarEngine iOS sdk version: #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
-    s.dependency solar_engine_pod_name, ">= #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"    
-    if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
-      s.dependency "SESDKRemoteConfig", ">= #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
-    end
+    s.dependency solar_engine_pod_name, ">= #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
   else
     puts "SolarEngine iOS SDK: using the latest version"
     s.dependency solar_engine_pod_name
-    if ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG'] != 'true'
-      s.dependency  "SESDKRemoteConfig"
-    end
-  end  
-
-  puts "SolarEngine DisableRemoteConfig value: #{ENV['SOLARENGINE_DISABLE_REMOTE_CONFIG']}"
+  end
 
   if defined?(install_modules_dependencies)
     install_modules_dependencies(s)

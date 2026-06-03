@@ -54,6 +54,19 @@ import {
 
 import type { AttributionInfo } from './types/attribution';
 
+type HarmonyCallbackModule = {
+  fetchDistinctId(callback: (result: string) => void): void;
+  fetchVisitor(callback: (result: string) => void): void;
+  retrievePresetProperties(callback: (result: Object) => void): void;
+  currentPlatform(): string;
+  authorizationCompleted(): void;
+  setInternalLogEnabled(enabled: boolean): void;
+  requestPermissionsFromUser(callback: (status: number) => void): void;
+};
+
+const HarmonySolarengineAnalysis =
+  SolarengineAnalysis as typeof SolarengineAnalysis & HarmonyCallbackModule;
+
 export function multiply(a: number, b: number): number {
   return SolarengineAnalysis.multiply(a, b);
 }
@@ -64,6 +77,23 @@ export function preInit(appKey: string) {
   SolarengineAnalysis.preInit(appKey);
 }
 
+function harmonyPlatform(): boolean {
+  // 先判断安卓/iOS，直接返回 false
+  if (Platform.OS === 'android' || Platform.OS === 'ios') {
+    return false;
+  }
+  try {
+    if (
+      HarmonySolarengineAnalysis &&
+      typeof HarmonySolarengineAnalysis.currentPlatform === 'function'
+    ) {
+      return HarmonySolarengineAnalysis.currentPlatform() === 'harmony';
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
 function _setReactNativeBridgeVersion() {
   SolarengineAnalysis.setReactNativeBridgeVersion(SolarEnginePluginVersion);
 }
@@ -117,6 +147,9 @@ function _handleAttribution(attribution: attribution | undefined) {
       };
       reactnative_code = android_object_wrapper.reactnative_code;
       reactnative_data = android_object_wrapper.reactnative_data;
+    } else {
+      reactnative_code = dictData.reactnative_code;
+      reactnative_data = dictData.reactnative_data;
     }
 
     let code = reactnative_code as number;
@@ -143,6 +176,10 @@ function _handleDeepLink(deeplink: deeplink | undefined) {
     return;
   }
 
+  if (Platform.OS === 'ios') {
+    return;
+  }
+
   SolarengineAnalysis.registerDeeplink((deeplinkResult: Object) => {
     const dictData = deeplinkResult as {
       [key: string]: string | number | Object;
@@ -151,7 +188,7 @@ function _handleDeepLink(deeplink: deeplink | undefined) {
     var reactnative_code = null;
     var reactnative_data = null;
 
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === 'ios' || harmonyPlatform()) {
       reactnative_code = dictData.reactnative_code;
       reactnative_data = dictData.reactnative_data;
     } else if (Platform.OS === 'android') {
@@ -162,7 +199,8 @@ function _handleDeepLink(deeplink: deeplink | undefined) {
       reactnative_data = android_object_wrapper.reactnative_data;
     }
 
-    if (reactnative_code) {
+    // if (reactnative_code) //这里如果reactnative_code是0，那么if (reactnative_code)永远是false
+    if (reactnative_code !== null && reactnative_code !== undefined) {
       let code = reactnative_code as number;
       if (code === 0) {
         let data = reactnative_data as DeepLinkInfo;
@@ -202,7 +240,7 @@ function _handleDeferredDeeplink(
       var reactnative_code = null;
       var reactnative_data = null;
 
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === 'ios' || harmonyPlatform()) {
         reactnative_code = dictData.reactnative_code;
         reactnative_data = dictData.reactnative_data;
       } else if (Platform.OS === 'android') {
@@ -212,7 +250,8 @@ function _handleDeferredDeeplink(
         reactnative_code = android_object_wrapper.reactnative_code;
         reactnative_data = android_object_wrapper.reactnative_data;
       }
-      if (reactnative_code) {
+      //if (reactnative_code) {////这里如果reactnative_code是0，那么if (reactnative_code)永远是false
+      if (reactnative_code !== null && reactnative_code !== undefined) {
         let code = reactnative_code as number;
         if (code === 0) {
           let data = reactnative_data as DeferredDeepLinkInfo;
@@ -312,8 +351,23 @@ export function retrieveAttribution(): AttributionInfo | null {
 
 /************** DistinctId *****************/
 export function fetchDistinctId(): string {
+  if (harmonyPlatform()) {
+    log(
+      `"fetchDistinctId" is callback-only on harmony, use "fetchDistinctIdWithCallback"`
+    );
+    return '';
+  }
   let distinctId = SolarengineAnalysis.fetchDistinctId();
   return distinctId;
+}
+export function fetchDistinctIdWithCallback(
+  callback: (str: string) => void
+): void {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    log(`"fetchDistinctIdWhitCallback" not supported in iOS or Android device`);
+  } else {
+    HarmonySolarengineAnalysis.fetchDistinctId(callback);
+  }
 }
 
 /************** VisitorID *****************/
@@ -322,8 +376,23 @@ export function setVisitorID(visitorID: string) {
 }
 
 export function fetchVisitor(): string {
+  if (harmonyPlatform()) {
+    log(
+      `"fetchVisitor" is callback-only on harmony, use "fetchVisitorWithCallback"`
+    );
+    return '';
+  }
   let visitor = SolarengineAnalysis.fetchVisitor();
   return visitor;
+}
+export function fetchVisitorWithCallback(
+  callback: (str: string) => void
+): void {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    log(`"fetchVisitorWithCallback" not supported in iOS or Android device`);
+  } else {
+    HarmonySolarengineAnalysis.fetchVisitor(callback);
+  }
 }
 
 /************** AccountID *****************/
@@ -351,6 +420,12 @@ export function clearSuperProperties() {
 
 /************** Properties for all Preset event *****************/
 export function retrievePresetProperties(): Object {
+  if (harmonyPlatform()) {
+    log(
+      `"retrievePresetProperties" is callback-only on harmony, use "retrievePresetPropertiesWithCallBack"`
+    );
+    return {};
+  }
   if (Platform.OS === 'ios') {
     let presetProperties = SolarengineAnalysis.retrievePresetProperties();
     return presetProperties;
@@ -362,9 +437,19 @@ export function retrievePresetProperties(): Object {
     let resultObject = dictData.android_object_wrapper_key as Object;
     return resultObject;
   }
-
   let presetProperties = SolarengineAnalysis.retrievePresetProperties();
   return presetProperties;
+}
+export function retrievePresetPropertiesWithCallBack(
+  callback: (result: Object) => void
+): void {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    log(
+      `"retrievePresetPropertiesWithCallBack" not supported in iOS or Android device`
+    );
+  } else {
+    HarmonySolarengineAnalysis.retrievePresetProperties(callback);
+  }
 }
 
 /************** Properties for specified Preset event *****************/
@@ -486,7 +571,7 @@ export function appDeeplinkOpenURL(urlString: string) {
 
 /************** RemoteConfig *****************/
 export function setDefaultConfig(configs: Array<ConfigItem>) {
-  let _configs = new Array<Object>();
+  let _configs: Object[] = [];
   for (let _config of configs) {
     let config = _config as ConfigItem;
     let name = config.name;
@@ -562,7 +647,11 @@ export function asyncFetchRemoteConfig(
 }
 /************** GDPR *****************/
 export function setGDPRArea(isGDPRArea: boolean) {
-  SolarengineAnalysis.setGDPRArea(isGDPRArea);
+  if (harmonyPlatform()) {
+    log(`"setGDPRArea" not supported in harmony device`);
+  } else {
+    SolarengineAnalysis.setGDPRArea(isGDPRArea);
+  }
 }
 
 /************** iOS *****************/
@@ -636,23 +725,38 @@ export function updatePostbackConversionValue(
 export function setOaid(oaid?: string) {
   if (Platform.OS === 'ios') {
     log(`"setOaid" not supported in iOS device`);
-  } else if (Platform.OS === 'android') {
+  } else {
     SolarengineAnalysis.setOaid(oaid);
   }
 }
 export function setGaid(gaid: string) {
-  if (Platform.OS === 'ios') {
-    log(`"setGaid" not supported in iOS device`);
-  } else if (Platform.OS === 'android') {
+  if (Platform.OS === 'ios' || harmonyPlatform()) {
+    log(`"setGaid" not supported in iOS or harmony device`);
+  } else {
     SolarengineAnalysis.setGaid(gaid);
   }
 }
 export function setChannel(channel: string) {
-  if (Platform.OS === 'ios') {
-    log(`"setChannel" not supported in iOS device`);
-  } else if (Platform.OS === 'android') {
+  if (Platform.OS !== 'android') {
+    log(`"setChannel" not supported in iOS or harmony device`);
+  } else {
     SolarengineAnalysis.setChannel(channel);
   }
+}
+export function authorizationCompleted() {
+  if (harmonyPlatform()) HarmonySolarengineAnalysis.authorizationCompleted();
+  else log(`"authorizationCompleted" not supported in iOS  or Android device`);
+}
+export function setInternalLogEnabled(enabled: boolean) {
+  if (harmonyPlatform())
+    HarmonySolarengineAnalysis.setInternalLogEnabled(enabled);
+  else log(`"setInternalLogEnabled" not supported in iOS or Android device`);
+}
+export function requestPermissionsFromUser(callback: (status: number) => void) {
+  if (harmonyPlatform())
+    HarmonySolarengineAnalysis.requestPermissionsFromUser(callback);
+  else
+    log(`"requestPermissionsFromUser" not supported in iOS  or Android device`);
 }
 
 export type {

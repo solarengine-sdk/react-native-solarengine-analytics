@@ -99,6 +99,7 @@ def kotlin_version = getExtOrDefault("kotlinVersion")
 
 def solarengine_version = SolarengineAnalysisGradleProperties_SDKVersion
 
+
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -108,13 +109,12 @@ dependencies {
   println("**************[SolarEngine] You are using sdkversion: $solarengine_version . " +
     "**************")
 
+
   if(SolarengineAnalysisGradleProperties_BuildOverSeaChannel.toBoolean()){
     //oversea
     println("**************[SolarEngine] You are using Oversea sdk. **************")
     implementation "com.reyun.solar.engine.oversea:solar-engine-core:${solarengine_version}"
-    if(SolarengineAnalysisGradleProperties_EnableRemoteConfig.toBoolean()) {
-      implementation "com.reyun.solar.engine.oversea:solar-remote-config:${solarengine_version}"
-    }
+
     // if you want to use oaid plugin, open here
     implementation "com.reyun.solar.engine:se-plugin-oaid:${solarengine_version}"
 
@@ -123,11 +123,7 @@ dependencies {
     println("**************[SolarEngine] You are using China sdk. **************")
     implementation "com.reyun.solar.engine.china:solar-engine-core:${solarengine_version}"
 
-    if(SolarengineAnalysisGradleProperties_EnableRemoteConfig.toBoolean()) {
-      implementation "com.reyun.solar.engine.china:solar-remote-config:${solarengine_version}"
-    }else{
-          println("**************[SolarEngine] You disabled the RemoteConfig. **************")
-    }
+
 
   }
 }

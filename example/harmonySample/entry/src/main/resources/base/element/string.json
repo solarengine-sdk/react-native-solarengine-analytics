@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "SolarEngineRNSample"
+    },
+    {
+      "name": "request_oaid_reason",
+      "value": "用于获取读取oaid的权限"
+    },
+    {
+      "name": "STORE_PERSISTENT_DATA",
+      "value": "在应用卸载时保留关键资产"
+    },
+    {
+      "name": "GET_NETWORK_INFO",
+      "value": "获取GET_NETWORK_INFO权限"
+    },
+    {
+      "name": "INTERNET",
+      "value": "获取 INTERNET 权限"
+    }
+  ]
+}
