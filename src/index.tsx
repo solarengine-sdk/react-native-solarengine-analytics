@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.6.9';
+const SolarEnginePluginVersion = '1.7.0';
 
 import type {
   SolarEngineInitiateOptions,
@@ -78,7 +78,6 @@ export function preInit(appKey: string) {
 }
 
 function harmonyPlatform(): boolean {
-  // 先判断安卓/iOS，直接返回 false
   if (Platform.OS === 'android' || Platform.OS === 'ios') {
     return false;
   }
@@ -670,6 +669,8 @@ export function requestTrackingAuthorization(
     );
   } else if (Platform.OS === 'android') {
     log(`"requestTrackingAuthorization" not supported in Android OS device`);
+  } else if (harmonyPlatform()) {
+    log(`"requestTrackingAuthorization" not supported in harmony device`);
   }
 }
 
@@ -716,6 +717,9 @@ export function updatePostbackConversionValue(
     });
   } else if (Platform.OS === 'android') {
     log(`"updatePostbackConversionValue" not supported in Android OS device`);
+    return Promise.resolve(null);
+  } else if (harmonyPlatform()) {
+    log(`"updatePostbackConversionValue" not supported in harmony device`);
     return Promise.resolve(null);
   }
   return Promise.reject(new Error('Unsupported platform'));

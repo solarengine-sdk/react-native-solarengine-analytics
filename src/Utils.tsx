@@ -7,7 +7,7 @@ export function assert(condition: boolean, message: string) {
 }
 
 export function log(str: string) {
-  let platform = 'unknown';
+  let platform = String(Platform.OS || 'unknown');
   if (Platform.OS === 'ios') {
     platform = 'iOS';
   } else if (Platform.OS === 'android') {
