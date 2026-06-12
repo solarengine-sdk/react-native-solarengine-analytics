@@ -80,15 +80,15 @@ program
     }
 
     let disable = false;
-    if (options.disableRemoteConfig == true) {
+    if (options.disableRemoteConfig === true) {
       disable = true;
-    } else if (options.disableRemoteConfig == false) {
+    } else if (options.disableRemoteConfig === false) {
       disable = false;
     }
 
-    if (options.enableRemoteConfig == true) {
+    if (options.enableRemoteConfig === true) {
       disable = false;
-    } else if (options.enableRemoteConfig == false) {
+    } else if (options.enableRemoteConfig === false) {
       disable = true;
     }
 

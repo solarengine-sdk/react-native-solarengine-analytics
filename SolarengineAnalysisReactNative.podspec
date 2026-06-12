@@ -6,7 +6,6 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 isMainlandChain = false
 
 # 根据条件设置 podname
-solar_engine_pod_name = "SolarEngineSDKiOSInter"
 solar_engine_pod_name = isMainlandChain ? "SolarEngineSDK" : "SolarEngineSDKiOSInter"
 
 ENV['SOLARENGINE_IOS_SDK_VERSION'] ||= ''

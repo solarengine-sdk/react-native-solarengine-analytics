@@ -45,7 +45,6 @@ export function objectItem(name: string, value: Object): ConfigItem {
   assert(value != null, 'the value should not be null');
   assert(value !== undefined, 'the value should not be undefined');
 
-
   log('objectItem, jsonString: ' + JSON.stringify(value));
 
   let item = new ConfigItem();
