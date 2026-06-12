@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "bundle:harmony": "react-native bundle-harmony --dev false --entry-file index.js --config metro.config.js --bundle-output harmonySample/entry/src/main/resources/rawfile/bundle.harmony.js --assets-dest harmonySample/entry/src/main/resources/rawfile/assets",
+    "clean": "rm -rf harmonySample/entry/src/main/resources/rawfile/bundle.harmony.js harmonySample/entry/src/main/resources/rawfile/assets",
     "set-harmony-metro": "node ./scripts/harmony-platform.js set-metro",
     "start": "node ./scripts/harmony-platform.js metro",
     "harmony": "node ./scripts/harmony-platform.js run"

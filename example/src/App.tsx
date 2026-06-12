@@ -1,7 +1,19 @@
-import { StyleSheet, View, Text, Button, Alert, Platform } from 'react-native';
-import { preInit, multiply } from 'solarengine-analysis-react-native';
-import * as SolarEngine from 'solarengine-analysis-react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Button,
+  Platform,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  useColorScheme,
+  Linking,
+} from 'react-native';
+import sdkPackage from '../../package.json';
 
+import * as SolarEngine from 'solarengine-analysis-react-native';
 import type {
   RemoteConfig,
   se_initial_config,
@@ -10,24 +22,12 @@ import type {
   attribution,
   SolarEngineInitiateOptions,
   InitiateCompletionInfo,
-  DeepLinkInfo,
-  DeferredDeepLinkInfo,
-  requestTrackingAuthorizationCompletion,
-  SEAdImpressionEventAttribute,
-  SEAdClickEventAttribute,
-  SEIAPEventAttribute,
-  SEAppAttrEventAttribute,
-  SEOrderEventAttribute,
-  SERegisterEventAttribute,
-  SELoginEventAttribute,
   ConfigItem,
-  SECustomEventAttribute,
-  AttributionInfo,
 } from 'solarengine-analysis-react-native';
+
 import {
   SEUserDeleteType,
   RemoteConfigMergeType,
-  ATTrackingManagerAuthorizationStatus,
   PresetEventType,
   AdType,
   SKAdNetworkCoarseType,
@@ -35,742 +35,1129 @@ import {
   Paypal,
 } from 'solarengine-analysis-react-native';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text> Solarengine ReactNative</Text>
-      <Button onPress={_onPressButton} title="SDK Initiate" color="#841584" />
-      <View style={{ marginVertical: 30 }} />
-      <Button
-        onPress={_requestRemoteConfig}
-        title="Remote Configs"
-        color="#141584"
-      />
-    </View>
-  );
-}
-function _requestRemoteConfig() {
-  /*
-  setDefaultConfig,
-  setRemoteConfigEventProperties,
-  setRemoteConfigUserProperties,
-  fastFetchRemoteConfigWithKey,
-  fastFetchRemoteConfig,
-  asyncFetchRemoteConfigWithKey,
-  asyncFetchRemoteConfig
-*/
+const AndroidAppKey = '82770189c354de18';
+//const iOSAppKey = '07df077973a84ea7';//海外b012bf6e500c84db
 
-  let defaultConfig: Array<ConfigItem> = new Array();
-  let item1 = SolarEngine.stringItem('key_string', 'stringText1');
-  let item2 = SolarEngine.numberItem('key_number', 22);
-  let item3 = SolarEngine.booleanItem('key_boolean', true);
+const iOSAppKey = '16e503718a7305f5'; //海外b012bf6e500c84db
 
-  const obj = {
-    name: 'John',
-    age: 30,
-    hobbies: ['reading', 'coding', 'running'],
-  };
-  let item4 = SolarEngine.objectItem('key_object', obj);
+const HMAppKey = '16e503718a7305f5';
 
-  defaultConfig.push(item1);
-  defaultConfig.push(item2);
-  defaultConfig.push(item3);
-  defaultConfig.push(item4);
-  SolarEngine.setDefaultConfig(defaultConfig);
+const LOG_PREFIX = '[SeSDK Demo]';
+let logSeq = 0;
 
-  const eventProperties = {
-    key1: 'stringText2',
-    key2: 222,
-    key3: true,
-  };
+const nextLogSeq = () => {
+  logSeq += 1;
+  return logSeq;
+};
 
-  const userProperties = {
-    user_key1: 'stringText3',
-    user_key2: 2222,
-    user_key3: true,
-  };
-  SolarEngine.setRemoteConfigEventProperties(eventProperties);
-  SolarEngine.setRemoteConfigUserProperties(userProperties);
+const log = (str: string) => {
+  const stamp = new Date().toISOString();
+  console.log(`${LOG_PREFIX}[${Platform.OS}][${stamp}] ${str}`);
+};
 
-  SolarEngine.fastFetchRemoteConfig((value: Object | null) => {
-    if (value != null) {
-      log(
-        'fastFetchRemoteConfig, JSON.stringify result: ' + JSON.stringify(value)
-      );
+const safeStringify = (value: unknown) => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
 
-      const typedValue = value as {
-        key_string: string;
-        key_boolean: boolean;
-        key_object: object;
-        key_number: string;
-      };
-      log('fastFetchRemoteConfig, key_string: ' + typedValue.key_string);
-      log('fastFetchRemoteConfig, key_boolean: ' + typedValue.key_boolean);
+const logCall = (name: string, payload?: unknown) => {
+  const seq = nextLogSeq();
+  const detail = payload === undefined ? '' : ` ${safeStringify(payload)}`;
+  log(`[CALL#${seq}] ${name}${detail}`);
+  return seq;
+};
 
-      log(
-        'fastFetchRemoteConfig, key_number typeOf: ' +
-          typeof typedValue.key_number
-      );
-
-      log('fastFetchRemoteConfig, key_number: ' + typedValue.key_number);
-
-      log(
-        'fastFetchRemoteConfig, key_object typeOf: ' +
-          typeof typedValue.key_object
-      );
-
-      const key_objectValue = typedValue.key_object as {
-        name: string;
-        hobbies: string[];
-        age: number;
-      };
-      if (key_objectValue && typeof key_objectValue === 'object') {
-        const nameValue = key_objectValue.name;
-        const ageValue = key_objectValue.age;
-        const hobbies = key_objectValue.hobbies;
-        log('fastFetchRemoteConfig, nameValue: ' + nameValue);
-        log('fastFetchRemoteConfig, ageValue: ' + ageValue);
-        log('fastFetchRemoteConfig, hobbies: ' + hobbies);
-      } else {
-        console.warn(
-          'key_objectValue is undefined or not an object',
-          key_objectValue
-        );
-      }
-    }
-  });
-
-  SolarEngine.fastFetchRemoteConfigWithKey(
-    'key_string',
-    (value: object | null) => {
-      if (value != null) {
-        log(
-          'fastFetchRemoteConfigWithKey, key_string: ' +
-            value +
-            '  typeof: ' +
-            typeof value
-        );
-      }
-    }
-  );
-  SolarEngine.fastFetchRemoteConfigWithKey(
-    'key_number',
-    (value: object | null) => {
-      if (value != null) {
-        log(
-          'fastFetchRemoteConfigWithKey, key_number: ' +
-            value +
-            '  typeof: ' +
-            typeof value
-        );
-      }
-    }
-  );
-
-  SolarEngine.fastFetchRemoteConfigWithKey(
-    'key_boolean',
-    (value: object | null) => {
-      if (value != null) {
-        log(
-          'fastFetchRemoteConfigWithKey, key_boolean: ' +
-            value +
-            '  typeof: ' +
-            typeof value
-        );
-      }
-    }
-  );
-  SolarEngine.fastFetchRemoteConfigWithKey(
-    'key_object',
-    (value: object | null) => {
-      if (value != null) {
-        const key_objectValue = value as {
-          name: string;
-          hobbies: string[];
-          age: number;
-        };
-        if (key_objectValue && typeof key_objectValue === 'object') {
-          const nameValue = key_objectValue.name;
-          const ageValue = key_objectValue.age;
-          const hobbies = key_objectValue.hobbies;
-          log('fastFetchRemoteConfigWithKey, nameValue: ' + nameValue);
-          log('fastFetchRemoteConfigWithKey, ageValue: ' + ageValue);
-          log('fastFetchRemoteConfigWithKey, hobbies: ' + hobbies);
-        } else {
-          console.warn(
-            'key_objectValue is undefined or not an object',
-            key_objectValue
-          );
-        }
-      }
-    }
-  );
-
-  SolarEngine.asyncFetchRemoteConfig((value: Object | null) => {
-    if (value != null) {
-      log(
-        'asyncFetchRemoteConfig, JSON.stringify result: ' +
-          JSON.stringify(value)
-      );
-      // const nameValue = value.name; // 使用点语法
-      // const ageValue = value['hobbies']; // 使用下标访问
-      const typedValue = value as {
-        key_string: string;
-        key_boolean: boolean;
-        key_object: object;
-        key_number: number;
-      };
-      log('asyncFetchRemoteConfig, key_string: ' + typedValue.key_string);
-      log('asyncFetchRemoteConfig, key_boolean: ' + typedValue.key_boolean);
-      log('asyncFetchRemoteConfig, key_number: ' + typedValue.key_number);
-
-      const key_objectValue = typedValue.key_object as {
-        name: string;
-        hobbies: string[];
-        age: number;
-      };
-      if (key_objectValue && typeof key_objectValue === 'object') {
-        const nameValue = key_objectValue.name;
-        const ageValue = key_objectValue.age;
-        const hobbies = key_objectValue.hobbies;
-        log('asyncFetchRemoteConfig, nameValue: ' + nameValue);
-        log('asyncFetchRemoteConfig, ageValue: ' + ageValue);
-        log('asyncFetchRemoteConfig, hobbies: ' + hobbies);
-      } else {
-        console.warn(
-          'key_objectValue is undefined or not an object',
-          key_objectValue
-        );
-      }
-    }
-  });
-
-  SolarEngine.asyncFetchRemoteConfigWithKey(
-    'key_object',
-    (value: object | null) => {
-      if (value != null) {
-        const key_objectValue = value as {
-          name: string;
-          hobbies: string[];
-          age: number;
-        };
-        if (key_objectValue && typeof key_objectValue === 'object') {
-          const nameValue = key_objectValue.name;
-          const ageValue = key_objectValue.age;
-          const hobbies = key_objectValue.hobbies;
-          log('asyncFetchRemoteConfigWithKey, nameValue: ' + nameValue);
-          log('asyncFetchRemoteConfigWithKey, ageValue: ' + ageValue);
-          log('asyncFetchRemoteConfigWithKey, hobbies: ' + hobbies);
-        } else {
-          console.warn(
-            'key_objectValue is undefined or not an object',
-            key_objectValue
-          );
-        }
-      }
-    }
-  );
-}
-function _onPressButton() {
-  log('Press button');
-  _preInit();
-
-  //ios
-  requestTrackingAuthorization();
-  updatePostbackConversionValue();
-  Initiate();
-
-  //android
-  setOaid();
-  setGaid();
-  setChannel();
-}
-function _afterSDKInitialized() {
-  log('_afterSDKInitialized invoked');
-
-  setGDPRArea();
-  retrieveAttribution();
-
-  fetchDistinctId();
-  setVisitorID();
-  fetchVisitor();
-
-  login();
-  fetchAccount();
-  logout();
-
-  setSuperProperties;
-  unsetSuperProperty;
-  clearSuperProperties();
-
-  retrievePresetProperties();
-  setPreSetEventWithProperties();
-  trackAdImpressionWithAttributes();
-  trackAdClickWithAttributes();
-  trackIAPWithAttributes();
-  trackAppAttrWithAttributes();
-  trackOrderWithAttributes();
-  trackRegisterWithAttributes();
-  trackLoginWithAttributes();
-  trackCustomEvent();
-  eventStart();
-  eventEnd();
-  trackFirstEvent();
-  userPropertiesInit();
-  userPropertiesUpdate();
-  userPropertiesAdd();
-  userPropertiesUnset();
-  userPropertiesAppend();
-
-  userPropertiesDelete();
-  reportEventimmediately();
-
-  trackAppReEngagement();
-  appDeeplinkOpenURL();
-}
-
-let AndroidAppKey4Solarengine = 'a9f4882f4834592b'; //'e62fe50b80fc6e5c';//'3774454bfa22233a';//
-let iOSAppKey4Solarengine = '07df077973a84ea7'; //1d91d62522d9a96d
-
-function _preInit() {
-  log('preInit');
-  let appKey = '';
-  if (Platform.OS === 'ios') {
-    appKey = AndroidAppKey4Solarengine;
-  } else if (Platform.OS === 'android') {
-    appKey = iOSAppKey4Solarengine;
+const logKeyValues = (prefix: string, value: unknown) => {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      logKeyValues(`${prefix}[${index}]`, item);
+    });
+    return;
   }
 
-  // SolarEngine.multiply(11,11);
-  multiply(11, 11);
-  preInit(appKey);
-  SolarEngine.preInit(appKey);
-}
+  if (value && typeof value === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      logKeyValues(`${prefix}.${key}`, item);
+    });
+    return;
+  }
+
+  log(`${prefix} = ${String(value)}`);
+};
+
+const DEFAULT_RC_KEYS = [
+  'key_string',
+  'key_number',
+  'key_boolean',
+  'key_object',
+] as const;
+
+const IOS_AUTO_RUN_CASES = false;
+
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const withCallId = (
+  props: Record<string, unknown> | undefined,
+  _callId?: number
+) => {
+  return props ?? {};
+};
+
+const PRESET_EVENT_PROPERTIES = { PresetEvent: 'test' };
+const PRESET_EVENT_TYPES =
+  PresetEventType.INSTALL | PresetEventType.START | PresetEventType.END;
+
+const trackVerifyEvent = (eventName: string, callId: number) => {
+  SolarEngine.trackCustomEvent(eventName, withCallId({}, callId), {
+    _currency_type: 'USD',
+    _pay_amount: 1,
+  });
+};
+
 function buildInitialConfig(): se_initial_config {
-  let config: se_initial_config = {
-    enableLog: false,
-    enableDebug: false,
+  return {
+    enableLog: true,
+    enableDebug: true,
     enable2G: true,
     enableGDPR: true,
+
+    enableUserData: true,
     enableCoppa: true,
     enableKidsApp: true,
     enableDeferredDeeplink: true,
     android: {
-      // metaAppId: 'place_your_meta_app_here',
       enablePersonalizedAd: true,
-      enableUserData: true,
     },
     ios: {
       attAuthorizationWaitingInterval: 60,
-      caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"},{"version":"20211207","caid":"e332a76c29654fcb7f6e6b31ced090c7"}]',
+      caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"}]',
+    },
+    harmony: {
+      authorizationTimeout: 100,
     },
   };
-  return config;
 }
+
 function buildRemoteConfig(): RemoteConfig {
-  let remoteConfig: RemoteConfig = {
+  return {
     enabled: true,
     mergeType: RemoteConfigMergeType.User,
     customIDProperties: { name: 'name_value' },
     customIDEventProperties: { age: 28 },
     customIDUserProperties: { key: 'value' },
   };
-  return remoteConfig;
-}
-function buildAttribution(): attribution {
-  const handleAttribution: attribution = (
-    code: number,
-    attributionInfo?: AttributionInfo
-  ) => {
-    log('attribution code: ' + code);
-    if (code === 0) {
-      log('attributionInfo: ' + JSON.stringify(attributionInfo));
-      if (attributionInfo) {
-        log('channel_name: ' + attributionInfo.channel_name);
-        log('attribution_time: ' + attributionInfo.attribution_time);
-        if (attributionInfo.re_data) {
-          log('re_data.install_time: ' + attributionInfo.re_data.install_time);
-          log(
-            're_data.attribution_time: ' +
-              attributionInfo.re_data.attribution_time
-          );
-        } else {
-          log('re_data: is null');
-        }
-      }
-    }
-  };
-  return handleAttribution;
-}
-function buildDeeplinkResponse(): deeplink {
-  const handleDeepLink: deeplink = (
-    code: number,
-    deepLinkInfo?: DeepLinkInfo
-  ) => {
-    if (code === 0) {
-      if (deepLinkInfo) {
-        log('deepLinkInfo.sedpLink: ' + deepLinkInfo.sedpLink);
-      }
-    }
-  };
-  return handleDeepLink;
-}
-function buildDeferredDeeplinkResponse(): deferredDeeplink {
-  const handleDeferredDeeplink: deferredDeeplink = (
-    code: number,
-    deferreddeeplink?: DeferredDeepLinkInfo
-  ) => {
-    if (code === 0) {
-      if (deferreddeeplink) {
-        log('deferreddeeplink.sedpLink: ' + deferreddeeplink.sedpLink);
-      }
-    }
-  };
-  return handleDeferredDeeplink;
 }
 
-async function Initiate() {
-  log('Initiate');
-
-  let appKey = '';
-  if (Platform.OS === 'ios') {
-    appKey = iOSAppKey4Solarengine;
-  } else if (Platform.OS === 'android') {
-    appKey = AndroidAppKey4Solarengine;
+const handleAttribution: attribution = (code, attributionInfo) => {
+  log('Attribution callback code: ' + code);
+  log('Attribution callback data: ' + safeStringify(attributionInfo ?? null));
+  if (attributionInfo) {
+    logKeyValues('Attribution callback', attributionInfo);
   }
+};
 
-  let config: se_initial_config = buildInitialConfig();
-  let remoteConfig: RemoteConfig = buildRemoteConfig();
-  let attribution: attribution = buildAttribution();
-  let deeplink: deeplink = buildDeeplinkResponse();
-  let deferredDeeplink: deferredDeeplink = buildDeferredDeeplinkResponse();
+const handleDeepLink: deeplink = (code, deepLinkInfo) => {
+  log('DeepLink callback code: ' + code);
+  log('DeepLink callback data: ' + safeStringify(deepLinkInfo ?? null));
+  if (deepLinkInfo) {
+    logKeyValues('DeepLink callback', deepLinkInfo);
+  }
+};
 
-  let initiateOptions: SolarEngineInitiateOptions = {
-    config: config,
-    remoteConfig: remoteConfig,
-    attribution: attribution,
-    deeplink: deeplink,
-    deferredDeeplink: deferredDeeplink,
-  };
-  SolarEngine.initialize(
-    appKey,
-    initiateOptions,
-    (result: InitiateCompletionInfo) => {
-      log('SolarEngine SDK Initiate result: ' + JSON.stringify(result));
-      if (result.success) {
-        Alert.alert('SDK Initiate Complete!');
-        //Now you can report event via relevant api
-      }
-      _afterSDKInitialized();
-    }
+const handleDeferredDeeplink: deferredDeeplink = (
+  code,
+  deferredDeepLinkInfo
+) => {
+  log('DeferredDeepLink callback code: ' + code);
+  log(
+    'DeferredDeepLink callback data: ' +
+      safeStringify(deferredDeepLinkInfo ?? null)
   );
-}
-
-function setGDPRArea() {
-  SolarEngine.setGDPRArea(true);
-}
-function retrieveAttribution() {
-  let attribution: AttributionInfo | null = SolarEngine.retrieveAttribution();
-  log('attribution: ' + JSON.stringify(attribution));
-
-  if (attribution != null) {
-    log('channel_id:' + attribution.channel_id);
-    log('channel_name:' + attribution.channel_name);
-    log('attribution_time:' + attribution.attribution_time);
-  } else {
-    log('attribution is null');
+  if (deferredDeepLinkInfo) {
+    logKeyValues('DeferredDeepLink callback', deferredDeepLinkInfo);
   }
-}
+};
 
-function fetchDistinctId() {
-  let distinctId = SolarEngine.fetchDistinctId();
-  log('distinctId: ' + distinctId);
-}
-function setVisitorID() {
-  let visitorID: string = 'your visitor id';
-  SolarEngine.setVisitorID(visitorID);
-}
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.buttonGrid}>{children}</View>
+  </View>
+);
 
-function fetchVisitor() {
-  let visitorID = SolarEngine.fetchVisitor();
-  log('visitorID: ' + visitorID);
-}
+const DemoButton = ({
+  title,
+  onPress,
+  color = '#2196F3',
+}: {
+  title: string;
+  onPress: () => void;
+  color?: string;
+}) => (
+  <View style={styles.buttonWrapper}>
+    <Button title={title} onPress={onPress} color={color} />
+  </View>
+);
 
-function login() {
-  let accountID: string = 'your account id';
-  SolarEngine.login(accountID);
-}
+export default function App() {
+  const isDarkMode = useColorScheme() === 'dark';
+  const platformDemoLabel =
+    Platform.OS === 'ios'
+      ? '当前平台 Demo: iOS'
+      : Platform.OS === 'android'
+        ? '当前平台 Demo: Android'
+        : '当前平台 Demo: Harmony';
+  const sdkVersionLabel = `SDK 版本: v${sdkPackage.version}`;
 
-function logout() {
-  SolarEngine.logout();
-}
+  useEffect(() => {
+    const initUrl = async () => {
+      const url = await Linking.getInitialURL();
+      if (url) {
+        log('Initial Deeplink URL: ' + url);
+        logCall('appDeeplinkOpenURL', { url });
+        SolarEngine.appDeeplinkOpenURL(url);
+      }
+    };
+    initUrl();
 
-function fetchAccount() {
-  let accountID = SolarEngine.fetchAccount();
-  log('accountID: ' + accountID);
-}
+    const listener = Linking.addEventListener('url', (evt) => {
+      if (evt.url) {
+        log('Runtime Deeplink URL: ' + evt.url);
+        logCall('appDeeplinkOpenURL', { url: evt.url });
+        SolarEngine.appDeeplinkOpenURL(evt.url);
+      }
+    });
 
-function setSuperProperties() {
-  let superProperties: Object = {};
-  SolarEngine.setSuperProperties(superProperties);
-}
+    return () => {
+      listener.remove();
+    };
+  }, []);
 
-function unsetSuperProperty() {
-  let key: string = 'your_key';
-  SolarEngine.unsetSuperProperty(key);
-}
-
-function clearSuperProperties() {
-  SolarEngine.clearSuperProperties();
-}
-
-function retrievePresetProperties() {
-  let presetProperties = SolarEngine.retrievePresetProperties();
-  let type = typeof presetProperties;
-  log('retrievePresetProperties type: ' + type);
-  log('retrievePresetProperties: ' + JSON.stringify(presetProperties));
-
-  const object = presetProperties as {
-    _package_name: string;
-    _app_name: string;
-    _screen_height: number;
+  const _preInit = () => {
+    log('preInit');
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+      logCall('setInternalLogEnabled', {
+        enabled: true,
+        scene: 'before preInit',
+      });
+      SolarEngine.setInternalLogEnabled(true);
+    }
+    const appKey = Platform.OS === 'android' ? AndroidAppKey : HMAppKey;
+    logCall('preInit', { appKey });
+    SolarEngine.preInit(appKey);
   };
-  log('_package_name:' + object._package_name);
-  log('_app_name:' + object._app_name);
-  log('_screen_height:' + object._screen_height);
-}
 
-function setPreSetEventWithProperties() {
-  let eventType: PresetEventType =
-    PresetEventType.START | PresetEventType.INSTALL | PresetEventType.END;
+  const _initialize = (): Promise<InitiateCompletionInfo> => {
+    let appKey = '';
+    if (Platform.OS === 'ios') {
+      appKey = iOSAppKey;
+    } else if (Platform.OS === 'android') {
+      appKey = AndroidAppKey;
+    } else {
+      appKey = HMAppKey;
+    }
+    log('initialize platform: ' + Platform.OS);
+    logCall('initialize', { platform: Platform.OS, appKey });
+    logCall('setPreSetEventWithProperties.beforeInitialize', {
+      eventType: PRESET_EVENT_TYPES,
+      props: PRESET_EVENT_PROPERTIES,
+    });
+    SolarEngine.setPreSetEventWithProperties(
+      PRESET_EVENT_TYPES,
+      PRESET_EVENT_PROPERTIES
+    );
 
-  SolarEngine.setPreSetEventWithProperties(eventType);
-}
-function trackAdImpressionWithAttributes() {
-  let attribute: SEAdImpressionEventAttribute = {
-    adNetworkPlatform: 'AdNetwork platform',
-    adType: AdType.Banner,
-    adNetworkAppID: 'AdNetwork appid',
-    adNetworkPlacementID: 'AdNetwork placementid',
-    mediationPlatform: 'mediation platform',
-    currency: 'USD',
-    ecpm: 1.234,
-    rendered: true,
-    customProperties: { customProperties: 'adimp customProperties value' },
+    const options: SolarEngineInitiateOptions = {
+      config: buildInitialConfig(),
+      remoteConfig: buildRemoteConfig(),
+      attribution: handleAttribution,
+      deeplink: handleDeepLink,
+      deferredDeeplink: handleDeferredDeeplink,
+    };
+
+    return new Promise((resolve) => {
+      SolarEngine.initialize(
+        appKey,
+        options,
+        (result: InitiateCompletionInfo) => {
+          log('Initialize result: ' + JSON.stringify(result));
+          resolve(result);
+        }
+      );
+    });
   };
-  SolarEngine.trackAdImpressionWithAttributes(attribute);
-}
-function trackAdClickWithAttributes() {
-  let attribute: SEAdClickEventAttribute = {
-    adNetworkPlatform: 'AdNetwork platform',
-    adType: AdType.Interstitial,
-    adNetworkPlacementID: 'AdNetwork placementid',
-    mediationPlatform: 'mediation platform',
-    customProperties: { customProperties: 'adclick customProperties value' },
-  };
-  SolarEngine.trackAdClickWithAttributes(attribute);
-}
-function trackIAPWithAttributes() {
-  let attribute: SEIAPEventAttribute = {
-    productID: 'product id',
-    productName: 'product name',
-    productCount: 3,
-    orderId: 'order id',
-    payAmount: 3.14,
-    currency: 'USD',
-    // const Alipay    = "alipay";
-    // const Weixin    = "weixin";
-    // const ApplePay  = "applepay";
-    // const Paypal    = "paypal";
-    payType: Paypal,
-    // None        = 0,
-    // Success     = 1,
-    // Failed      = 2,
-    // Restored    = 3
-    payStatus: SEIAPStatus.Success,
-    failReason: '',
-    customProperties: { customProperties: 'iap customProperties value' },
-  };
-  SolarEngine.trackIAPWithAttributes(attribute);
-}
-function trackAppAttrWithAttributes() {
-  let attribute: SEAppAttrEventAttribute = {
-    adNetwork: 'toutiao',
-    subChannel: '103300',
-    adAccountID: '1655958321988611',
-    adAccountName: 'xxx科技全量18',
-    adCampaignID: '1680711982033293',
-    adCampaignName: '冲冲冲计划157-1024',
-    adOfferID: '1685219082855528',
-    adOfferName: '冲冲冲单元406-1024',
-    adCreativeID: '1680128668901378',
-    adCreativeName: '自动创建20210901178921',
-    attributionPlatform: '广告监测平台xxx',
-    customProperties: { customProperties: 'app attr customProperties value' },
-  };
-  SolarEngine.trackAppAttrWithAttributes(attribute);
-}
-function trackOrderWithAttributes() {
-  let attribute: SEOrderEventAttribute = {
-    orderID: 'order id',
-    payAmount: 3.1415926,
-    currency: 'USD',
-    payType: Paypal,
-    status: 'success',
-    customProperties: { customProperties: 'order customProperties value' },
-  };
-  SolarEngine.trackOrderWithAttributes(attribute);
-}
-function trackRegisterWithAttributes() {
-  let attribute: SERegisterEventAttribute = {
-    registerType: 'WeChat',
-    registerStatus: 'success',
-    customProperties: { customProperties: 'register customProperties value' },
-  };
-  SolarEngine.trackRegisterWithAttributes(attribute);
-}
-function trackLoginWithAttributes() {
-  let attribute: SELoginEventAttribute = {
-    loginType: 'WeChat',
-    loginStatus: 'failed',
-    customProperties: { customProperties: 'login customProperties value' },
-  };
-  SolarEngine.trackLoginWithAttributes(attribute);
-}
-function trackCustomEvent() {
-  let eventName = 'fake_key_name';
-  let customProperties = { customProperties: 'customProperties value' };
-  let preProperties = {
-    trackCustomEvent_key: ' trackCustomEvent_properties_singleValue',
-  };
-  SolarEngine.trackCustomEvent(eventName, customProperties, preProperties);
-}
-function eventStart() {
-  let eventName = 'time_event_name';
-  SolarEngine.eventStart(eventName);
-}
-function eventEnd() {
-  let eventName = 'time_event_name';
-  SolarEngine.eventEnd(eventName);
-}
-function trackFirstEvent() {
-  let firstCheckId = 'register_first_check_id';
-  let attribute: SERegisterEventAttribute = {
-    registerType: 'XXXXX',
-    registerStatus: 'failed',
-    customProperties: {
-      customProperties_key: 'register customProperties value',
+
+  const _remoteConfigActions = {
+    setDefault: () => {
+      const defaultConfig: ConfigItem[] = [];
+      const item1 = SolarEngine.stringItem('key_string', 'stringText1');
+      const item2 = SolarEngine.numberItem('key_number', 22);
+      const item3 = SolarEngine.booleanItem('key_boolean', true);
+
+      const obj = {
+        name: 'John',
+        age: 30,
+        hobbies: ['reading', 'coding', 'running'],
+      };
+      let item4 = SolarEngine.objectItem('key_object', obj);
+
+      defaultConfig.push(item1);
+      defaultConfig.push(item2);
+      defaultConfig.push(item3);
+      defaultConfig.push(item4);
+      SolarEngine.setDefaultConfig(defaultConfig);
+
+      logCall('setDefaultConfig', {
+        key_string: 'stringText1',
+        key_number: 22,
+        key_boolean: true,
+        key_object: obj,
+      });
+      log('remoteConfig.default.key_string = stringText1');
+      log('remoteConfig.default.key_number = 22');
+      log('remoteConfig.default.key_boolean = true');
+      log('remoteConfig.default.key_object = ' + safeStringify(obj));
+    },
+    setEventProps: () => {
+      logCall('setRemoteConfigEventProperties', {
+        r_event_prop: 'val',
+      });
+      SolarEngine.setRemoteConfigEventProperties({ r_event_prop: 'val' });
+    },
+    setUserProps: () => {
+      logCall('setRemoteConfigUserProperties', {
+        r_user_prop: 'val',
+      });
+      SolarEngine.setRemoteConfigUserProperties({ r_user_prop: 'val' });
+    },
+    fastFetch: () => {
+      logCall('fastFetchRemoteConfig');
+      SolarEngine.fastFetchRemoteConfig((value) => {
+        if (!value) return;
+        const data = value as {
+          key_string: string;
+          key_boolean: boolean;
+          key_object: { name: string; hobbies: string[]; age: number };
+          key_number: number;
+        };
+        log('fastFetch string: ' + data.key_string);
+        log('fastFetch boolean: ' + data.key_boolean);
+        log('fastFetch number: ' + data.key_number);
+        log('fastFetch name: ' + data.key_object.name);
+        log('fastFetch age: ' + data.key_object.age);
+        log('fastFetch hobbies: ' + data.key_object.hobbies);
+      });
+    },
+    fastFetchKey: () => {
+      logCall('fastFetchRemoteConfigWithKey', {
+        keys: DEFAULT_RC_KEYS,
+      });
+      DEFAULT_RC_KEYS.forEach((key) => {
+        SolarEngine.fastFetchRemoteConfigWithKey(key, (value) => {
+          if (!value) return;
+          logKeyValues(`fastFetchRemoteConfigWithKey.${key}`, value);
+        });
+      });
+    },
+    asyncFetch: () => {
+      logCall('asyncFetchRemoteConfig');
+      SolarEngine.asyncFetchRemoteConfig((value) => {
+        if (!value) return;
+        const data = value as {
+          key_string: string;
+          key_boolean: boolean;
+          key_object: { name: string; hobbies: string[]; age: number };
+          key_number: number;
+        };
+        log('asyncFetch string: ' + data.key_string);
+        log('asyncFetch boolean: ' + data.key_boolean);
+        log('asyncFetch number: ' + data.key_number);
+        log('asyncFetch name: ' + data.key_object.name);
+        log('asyncFetch age: ' + data.key_object.age);
+        log('asyncFetch hobbies: ' + data.key_object.hobbies);
+      });
+    },
+    asyncFetchKey: () => {
+      logCall('asyncFetchRemoteConfigWithKey', {
+        keys: DEFAULT_RC_KEYS,
+      });
+      DEFAULT_RC_KEYS.forEach((key) => {
+        SolarEngine.asyncFetchRemoteConfigWithKey(key, (value) => {
+          if (!value) return;
+          logKeyValues(`asyncFetchRemoteConfigWithKey.${key}`, value);
+        });
+      });
     },
   };
 
-  SolarEngine.trackFirstEvent(firstCheckId, attribute);
-
-  let customCheckId = 'custom first check id';
-  let customAttribute: SECustomEventAttribute = {
-    eventName: 'dummy_custom_event_name',
-    customProperties: { preProperties_key: 'custom customProperties value' },
-    preProperties: { preProperties_key: 'custom customProperties value' },
+  const _userActions = {
+    setVisitorID: () => {
+      logCall('setVisitorID', { visitorId: 'v_id_123' });
+      SolarEngine.setVisitorID('v_id_123');
+    },
+    fetchVisitor: () => {
+      logCall('fetchVisitor');
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        const visitorId = SolarEngine.fetchVisitor();
+        log('visitorId: ' + visitorId);
+      } else {
+        SolarEngine.fetchVisitorWithCallback((res) => {
+          log('visitorId: ' + res);
+        });
+      }
+    },
+    login: () => {
+      logCall('login', { accountId: 'account_123' });
+      SolarEngine.login('account_123');
+    },
+    logout: () => {
+      logCall('logout');
+      SolarEngine.logout();
+    },
+    fetchAccount: () => {
+      logCall('fetchAccount');
+      const accountId = SolarEngine.fetchAccount();
+      log('accountId: ' + accountId);
+    },
+    fetchDistinctId: () => {
+      logCall('fetchDistinctId');
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        const distinctId = SolarEngine.fetchDistinctId();
+        log('distinctId: ' + distinctId);
+      } else {
+        SolarEngine.fetchDistinctIdWithCallback((res) => {
+          log('distinctId: ' + res);
+        });
+      }
+    },
+    setGDPR: () => {
+      logCall('setGDPRArea', { isGDPR: true });
+      SolarEngine.setGDPRArea(true);
+    },
+    authorizationCompleted: () => {
+      logCall('authorizationCompleted');
+      SolarEngine.authorizationCompleted();
+    },
+    setInternalLogEnabled: (enabled: boolean) => {
+      logCall('setInternalLogEnabled', { enabled });
+      SolarEngine.setInternalLogEnabled(enabled);
+    },
+    requestPermissions: () => {
+      logCall('requestPermissionsFromUser');
+      SolarEngine.requestPermissionsFromUser((status) => {
+        log('permission status: ' + status);
+      });
+    },
   };
-  SolarEngine.trackFirstEvent(customCheckId, customAttribute);
-}
 
-function userPropertiesInit() {
-  let properties = { properties_key: ' properties value' };
-  SolarEngine.userPropertiesInit(properties);
-}
-function userPropertiesUpdate() {
-  let properties = { properties_key: ' properties value' };
-  SolarEngine.userPropertiesUpdate(properties);
-}
-function userPropertiesAdd() {
-  let map = new Map<string, number>();
-  map.set('key1', 1.14);
-  map.set('key2', 2.14);
-  map.set('key3', 3.14);
-
-  SolarEngine.userPropertiesAdd(map);
-}
-function userPropertiesUnset() {
-  let keys: Array<string> = ['key_name1', 'key_name2', 'key_name3'];
-  SolarEngine.userPropertiesUnset(keys);
-}
-function userPropertiesAppend() {
-  let properties = { append_key: 'append value' };
-  SolarEngine.userPropertiesAppend(properties);
-}
-
-function userPropertiesDelete() {
-  let type: SEUserDeleteType = SEUserDeleteType.ByVisitorId;
-  SolarEngine.userPropertiesDelete(type);
-}
-function reportEventimmediately() {
-  SolarEngine.reportEventimmediately();
-}
-
-function trackAppReEngagement() {
-  let customProperties: Object = {};
-  SolarEngine.trackAppReEngagement(customProperties);
-}
-
-function appDeeplinkOpenURL() {
-  let urlString: string = 'https://your_deeplink_url_dummy';
-  SolarEngine.appDeeplinkOpenURL(urlString);
-}
-/************** iOS *****************/
-function requestTrackingAuthorization() {
-  log('requestTrackingAuthorization invoked');
-
-  let completion: requestTrackingAuthorizationCompletion = (
-    status: ATTrackingManagerAuthorizationStatus
-  ) => {
-    if (status === ATTrackingManagerAuthorizationStatus.Restricted) {
-    }
-    log('requestTrackingAuthorizationCompletion status: ' + status);
+  const _propertyActions = {
+    setSuper: () => {
+      const superProperties = { super_p: 'val', super_keep: 'keep' };
+      const callId = logCall('setSuperProperties', superProperties);
+      SolarEngine.setSuperProperties(superProperties);
+      trackVerifyEvent('rn_verify_set_super', callId);
+    },
+    unsetSuper: () => {
+      const callId = logCall('unsetSuperProperty', { key: 'super_p' });
+      SolarEngine.unsetSuperProperty('super_p');
+      trackVerifyEvent('rn_verify_unset_super', callId);
+    },
+    clearSuper: () => {
+      const callId = logCall('clearSuperProperties');
+      SolarEngine.clearSuperProperties();
+      trackVerifyEvent('rn_verify_clear_super', callId);
+    },
+    getPreset: () => {
+      logCall('retrievePresetProperties');
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        const preset = SolarEngine.retrievePresetProperties();
+        log('preset: ' + safeStringify(preset));
+        logKeyValues('preset', preset);
+      } else {
+        SolarEngine.retrievePresetPropertiesWithCallBack((res) => {
+          log('preset: ' + JSON.stringify(res));
+          logKeyValues('preset', res);
+        });
+      }
+    },
+    setPresetEvent: () => {
+      logCall('setPreSetEventWithProperties', {
+        eventType: PRESET_EVENT_TYPES,
+        props: PRESET_EVENT_PROPERTIES,
+      });
+      SolarEngine.setPreSetEventWithProperties(
+        PRESET_EVENT_TYPES,
+        PRESET_EVENT_PROPERTIES
+      );
+    },
   };
-  SolarEngine.requestTrackingAuthorization(completion);
-}
 
-function updatePostbackConversionValue() {
-  let conversionValue: number = 5;
-  let coarseValue: SKAdNetworkCoarseType = SKAdNetworkCoarseType.High;
-  let lockWindow: Boolean = false;
-  let promise = SolarEngine.updatePostbackConversionValue(
-    conversionValue,
-    coarseValue,
-    lockWindow
-  );
-  promise.then((error: Object | null) => {
-    log('updatePostbackConversionValue error: ' + JSON.stringify(error));
+  const _eventActions = {
+    custom: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event',
+        props: {},
+        preset: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+      const customProps = withCallId({}, callId);
+      SolarEngine.trackCustomEvent('test_event', customProps, {
+        _currency_type: 'USD',
+        _pay_amount: 11,
+      });
+    },
+    first: () => {
+      const callId1 = logCall('trackFirstEvent', {
+        eventName: 'first_check_1',
+        props: {
+          registerType: 'WeChat',
+          registerStatus: 'success',
+          customProperties: { key: 'test' },
+        },
+      });
+      SolarEngine.trackFirstEvent('first_check_1', {
+        registerType: 'WeChat',
+        registerStatus: 'success',
+        customProperties: withCallId({ key: 'test' }, callId1),
+      });
+      logCall('trackFirstEvent', {
+        eventName: 'first_check_2',
+        props: {
+          eventName: 'Customtest',
+          customProperties: { key: 'test' },
+          preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+        },
+      });
+      SolarEngine.trackFirstEvent('first_check_2', {
+        eventName: 'Customtest',
+        customProperties: { key: 'test' },
+        preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+    },
+    start: () => {
+      logCall('eventStart', { eventName: 'timer_event' });
+      SolarEngine.eventStart('timer_event');
+    },
+    end: () => {
+      const callId = logCall('eventEnd', {
+        eventName: 'timer_event',
+        props: {},
+      });
+      SolarEngine.eventEnd('timer_event', withCallId({}, callId));
+    },
+    reportNow: () => {
+      logCall('reportEventimmediately');
+      SolarEngine.reportEventimmediately();
+    },
+  };
+
+  const _specificActions = {
+    adImp: () => {
+      const callId = logCall('trackAdImpressionWithAttributes', {
+        adNetworkPlatform: 'AdMob',
+        adType: AdType.Interstitial,
+        adNetworkAppID: 'appid',
+        adNetworkPlacementID: 'pid',
+        mediationPlatform: 'MAX',
+        currency: 'USD',
+        ecpm: 1.234,
+        rendered: true,
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackAdImpressionWithAttributes({
+        adNetworkPlatform: 'AdMob',
+        adType: AdType.Interstitial,
+        adNetworkAppID: 'appid',
+        adNetworkPlacementID: 'pid',
+        mediationPlatform: 'MAX',
+        currency: 'USD',
+        ecpm: 1.234,
+        rendered: true,
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    adClick: () => {
+      const callId = logCall('trackAdClickWithAttributes', {
+        adNetworkPlatform: 'Network',
+        adType: AdType.Interstitial,
+        adNetworkPlacementID: 'pid',
+        mediationPlatform: 'mediation',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackAdClickWithAttributes({
+        adNetworkPlatform: 'Network',
+        adType: AdType.Interstitial,
+        adNetworkPlacementID: 'pid',
+        mediationPlatform: 'mediation',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    iap: () => {
+      const callId = logCall('trackIAPWithAttributes', {
+        productID: 'pid',
+        productName: 'name',
+        productCount: 3,
+        orderId: 'oid',
+        payAmount: 3.14,
+        currency: 'USD',
+        payType: Paypal,
+        payStatus: SEIAPStatus.Success,
+        failReason: '',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackIAPWithAttributes({
+        productID: 'pid',
+        productName: 'name',
+        productCount: 3,
+        orderId: 'oid',
+        payAmount: 3.14,
+        currency: 'USD',
+        payType: Paypal,
+        payStatus: SEIAPStatus.Success,
+        failReason: '',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    appAttr: () => {
+      const callId = logCall('trackAppAttrWithAttributes', {
+        adNetwork: 'toutiao',
+        subChannel: '103300',
+        adAccountID: '123',
+        adAccountName: 'test',
+        adCampaignID: '123',
+        adCampaignName: 'test',
+        adOfferID: '123',
+        adOfferName: 'test',
+        adCreativeID: '123',
+        adCreativeName: 'test',
+        attributionPlatform: 'platform',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackAppAttrWithAttributes({
+        adNetwork: 'toutiao',
+        subChannel: '103300',
+        adAccountID: '123',
+        adAccountName: 'test',
+        adCampaignID: '123',
+        adCampaignName: 'test',
+        adOfferID: '123',
+        adOfferName: 'test',
+        adCreativeID: '123',
+        adCreativeName: 'test',
+        attributionPlatform: 'platform',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    order: () => {
+      const callId = logCall('trackOrderWithAttributes', {
+        orderID: 'oid',
+        payAmount: 3.14,
+        currency: 'USD',
+        payType: Paypal,
+        status: 'success',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackOrderWithAttributes({
+        orderID: 'oid',
+        payAmount: 3.14,
+        currency: 'USD',
+        payType: Paypal,
+        status: 'success',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    register: () => {
+      const callId = logCall('trackRegisterWithAttributes', {
+        registerType: 'WeChat',
+        registerStatus: 'success',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackRegisterWithAttributes({
+        registerType: 'WeChat',
+        registerStatus: 'success',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    login: () => {
+      const callId = logCall('trackLoginWithAttributes', {
+        loginType: 'WeChat',
+        loginStatus: 'failed',
+        customProperties: { key: 'test' },
+      });
+      SolarEngine.trackLoginWithAttributes({
+        loginType: 'WeChat',
+        loginStatus: 'failed',
+        customProperties: withCallId({ key: 'test' }, callId),
+      });
+    },
+    reEngagement: () => {
+      logCall('trackAppReEngagement', { key: 'test' });
+      SolarEngine.trackAppReEngagement({ key: 'test' });
+    },
+  };
+
+  const _userPropActions = {
+    init: () => {
+      logCall('userPropertiesInit', { age: 20 });
+      SolarEngine.userPropertiesInit({ age: 20 });
+    },
+    update: () => {
+      logCall('userPropertiesUpdate', { age: 21 });
+      SolarEngine.userPropertiesUpdate({ age: 21 });
+    },
+    add: () => {
+      const map = new Map();
+      map.set('score', 10);
+      logCall('userPropertiesAdd', { score: 10 });
+      SolarEngine.userPropertiesAdd(map);
+    },
+    unset: () => {
+      logCall('userPropertiesUnset', ['rn_unset_marker']);
+      SolarEngine.userPropertiesUnset(['rn_unset_marker']);
+    },
+    append: () => {
+      logCall('userPropertiesAppend', { tags: 'new_tag' });
+      SolarEngine.userPropertiesAppend({ tags: 'new_tag' });
+    },
+    delete: () => {
+      logCall('userPropertiesDelete', {
+        types: [SEUserDeleteType.ByAccountId, SEUserDeleteType.ByVisitorId],
+        accountId: 'account_123',
+        visitorId: 'v_id_123',
+      });
+      SolarEngine.setVisitorID('v_id_123');
+      SolarEngine.login('account_123');
+      SolarEngine.userPropertiesDelete(SEUserDeleteType.ByAccountId);
+      SolarEngine.userPropertiesDelete(SEUserDeleteType.ByVisitorId);
+    },
+  };
+
+  const _attrActions = {
+    retrieveAttr: () => {
+      logCall('retrieveAttribution');
+      const result = SolarEngine.retrieveAttribution();
+      log('Attribution: ' + JSON.stringify(result));
+    },
+    openUrl: () => {
+      const url = 'link://www.example.com/programs?action=showall';
+      logCall('appDeeplinkOpenURL', { url });
+      SolarEngine.appDeeplinkOpenURL(url);
+    },
+  };
+
+  const _platformActions = {
+    iosATT: () => {
+      logCall('requestTrackingAuthorization');
+      SolarEngine.requestTrackingAuthorization((s) => {
+        log('ATT status: ' + s);
+      });
+    },
+    iosSKAN: () => {
+      logCall('updatePostbackConversionValue', {
+        value: 1,
+        coarseType: SKAdNetworkCoarseType.High,
+        lock: false,
+      });
+      SolarEngine.updatePostbackConversionValue(
+        1,
+        SKAdNetworkCoarseType.High,
+        false
+      ).then((e) => {
+        log('SKAN error: ' + JSON.stringify(e));
+      });
+    },
+    setOAID: () => {
+      const callId = logCall('setOaid', { oaid: 'oaid_123' });
+      SolarEngine.setOaid('oaid_123');
+      trackVerifyEvent('rn_verify_set_oaid', callId);
+    },
+    setGAID: () => {
+      const callId = logCall('setGaid', { gaid: 'gaid_123' });
+      SolarEngine.setGaid('gaid_123');
+      trackVerifyEvent('rn_verify_set_gaid', callId);
+    },
+    setChannel: () => {
+      const callId = logCall('setChannel', { channel: 'channel_123' });
+      SolarEngine.setChannel('channel_123');
+      trackVerifyEvent('rn_verify_set_channel', callId);
+    },
+  };
+
+  const autoRunActionsRef = useRef({
+    _attrActions,
+    _eventActions,
+    _platformActions,
+    _propertyActions,
+    _remoteConfigActions,
+    _specificActions,
+    _userActions,
+    _userPropActions,
   });
-}
 
-/************** Android *****************/
-function setOaid() {
-  let oaid: string = 'your oaid';
-  SolarEngine.setOaid(oaid);
-}
-function setGaid() {
-  let gaid: string = 'your gaid';
-  SolarEngine.setGaid(gaid);
-}
-function setChannel() {
-  let channel: string = 'your android apk channel';
-  SolarEngine.setChannel(channel);
-}
+  autoRunActionsRef.current = {
+    _attrActions,
+    _eventActions,
+    _platformActions,
+    _propertyActions,
+    _remoteConfigActions,
+    _specificActions,
+    _userActions,
+    _userPropActions,
+  };
 
-function log(str: string) {
-  console.log('[SolarEngine Example]: ' + str);
+  useEffect(() => {
+    if (!IOS_AUTO_RUN_CASES || Platform.OS !== 'ios') {
+      return;
+    }
+
+    const {
+      _attrActions: attrActions,
+      _eventActions: eventActions,
+      _platformActions: platformActions,
+      _propertyActions: propertyActions,
+      _remoteConfigActions: remoteConfigActions,
+      _specificActions: specificActions,
+      _userActions: userActions,
+      _userPropActions: userPropActions,
+    } = autoRunActionsRef.current;
+
+    let cancelled = false;
+
+    const runStep = async (
+      name: string,
+      action: () => void | Promise<void>
+    ) => {
+      if (cancelled) {
+        return;
+      }
+      log(`[ANDROID CASE] start ${name}`);
+      try {
+        await action();
+        log(`[ANDROID CASE] done ${name}`);
+      } catch (error) {
+        log(`[ANDROID CASE] failed ${name}: ${safeStringify(error)}`);
+      }
+      await delay(1200);
+    };
+
+    const runCases = async () => {
+      await delay(1500);
+      log('[ANDROID CASE] auto-run begin');
+      await runStep('preInit', () => _preInit());
+      await runStep('initialize', async () => {
+        await _initialize();
+      });
+      await delay(8000);
+      await runStep('setVisitorID', () => userActions.setVisitorID());
+      await runStep('getVisitorID', () => userActions.fetchVisitor());
+      await runStep('getDistinctId', () => userActions.fetchDistinctId());
+      await runStep('login', () => userActions.login());
+      await runStep('getAccountID', () => userActions.fetchAccount());
+      await runStep('logout', () => userActions.logout());
+      await runStep('getAccountIDAfterLogout', () =>
+        userActions.fetchAccount()
+      );
+      await runStep('setGDPRArea', () => userActions.setGDPR());
+      await runStep('setSuperProperties', () => propertyActions.setSuper());
+      await runStep('unsetSuperProperty', () => propertyActions.unsetSuper());
+      await runStep('clearSuperProperties', () => propertyActions.clearSuper());
+      await runStep('getPresetProperties', () => propertyActions.getPreset());
+      await runStep('setPresetEventProperties', () =>
+        propertyActions.setPresetEvent()
+      );
+      await runStep('trackCustomEvent', () => eventActions.custom());
+      await runStep('trackFirstEvent', () => eventActions.first());
+      await runStep('eventStart', () => eventActions.start());
+      await delay(1800);
+      await runStep('eventEnd', () => eventActions.end());
+      await runStep('trackAdImpression', () => specificActions.adImp());
+      await runStep('trackAdClick', () => specificActions.adClick());
+      await runStep('trackIAP', () => specificActions.iap());
+      await runStep('trackAppAttr', () => specificActions.appAttr());
+      await runStep('trackOrder', () => specificActions.order());
+      await runStep('trackRegister', () => specificActions.register());
+      await runStep('trackLogin', () => specificActions.login());
+      await runStep('userInit', () => userPropActions.init());
+      await runStep('userUpdate', () => userPropActions.update());
+      await runStep('userAdd', () => userPropActions.add());
+      await runStep('userUnset', () => userPropActions.unset());
+      await runStep('userAppend', () => userPropActions.append());
+      await runStep('userDelete', () => userPropActions.delete());
+      await runStep('getAttribution', () => attrActions.retrieveAttr());
+      await runStep('setDefaultConfig', () => remoteConfigActions.setDefault());
+      await runStep('setRemoteConfigEventProperties', () =>
+        remoteConfigActions.setEventProps()
+      );
+      await runStep('setRemoteConfigUserProperties', () =>
+        remoteConfigActions.setUserProps()
+      );
+      await runStep('fastFetchRemoteConfig', () =>
+        remoteConfigActions.fastFetch()
+      );
+      await runStep('fastFetchRemoteConfigWithKey', () =>
+        remoteConfigActions.fastFetchKey()
+      );
+      await runStep('asyncFetchRemoteConfig', () =>
+        remoteConfigActions.asyncFetch()
+      );
+      await runStep('asyncFetchRemoteConfigWithKey', () =>
+        remoteConfigActions.asyncFetchKey()
+      );
+      await runStep('requestTrackingAuthorization', () =>
+        platformActions.iosATT()
+      );
+      await runStep('updatePostbackConversionValue', () =>
+        platformActions.iosSKAN()
+      );
+      await runStep('iOSUnsupportedSetOaid', () => platformActions.setOAID());
+      await runStep('iOSUnsupportedSetGaid', () => platformActions.setGAID());
+      await runStep('iOSUnsupportedSetChannel', () =>
+        platformActions.setChannel()
+      );
+      await runStep('reportEventimmediately', () => eventActions.reportNow());
+      await delay(5000);
+      log('[ANDROID CASE] auto-run complete');
+    };
+
+    runCases();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' },
+      ]}
+    >
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <View style={styles.header}>
+        <Text
+          style={[styles.headerTitle, { color: isDarkMode ? '#fff' : '#000' }]}
+        >
+          SolarEngine SDK Demo CN
+        </Text>
+        <Text
+          style={[
+            styles.headerSubtitle,
+            { color: isDarkMode ? '#bdbdbd' : '#616161' },
+          ]}
+        >
+          {platformDemoLabel}
+        </Text>
+        <Text
+          style={[
+            styles.headerSubtitle,
+            { color: isDarkMode ? '#bdbdbd' : '#616161' },
+          ]}
+        >
+          {sdkVersionLabel}
+        </Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Section title="初始化">
+          <DemoButton title="Pre-Init1111" onPress={_preInit} />
+          <DemoButton title="Initialize" onPress={_initialize} />
+        </Section>
+
+        <Section title="用户操作">
+          <DemoButton
+            title="Set Visitor ID"
+            onPress={_userActions.setVisitorID}
+          />
+          <DemoButton title="Get Visitor" onPress={_userActions.fetchVisitor} />
+          <DemoButton title="Account Login" onPress={_userActions.login} />
+          <DemoButton title="Logout" onPress={_userActions.logout} />
+          <DemoButton title="Get Account" onPress={_userActions.fetchAccount} />
+          <DemoButton
+            title="Distinct ID"
+            onPress={_userActions.fetchDistinctId}
+          />
+          <DemoButton title="Set GDPR" onPress={_userActions.setGDPR} />
+          <DemoButton
+            title="Auth Completed"
+            onPress={_userActions.authorizationCompleted}
+          />
+          <DemoButton
+            title="Internal Log On"
+            onPress={() => _userActions.setInternalLogEnabled(true)}
+          />
+          <DemoButton
+            title="Internal Log Off"
+            onPress={() => _userActions.setInternalLogEnabled(false)}
+          />
+          <DemoButton
+            title="Request Permissions"
+            onPress={_userActions.requestPermissions}
+          />
+        </Section>
+
+        <Section title="属性设置">
+          <DemoButton title="Set Super" onPress={_propertyActions.setSuper} />
+          <DemoButton
+            title="Unset Super"
+            onPress={_propertyActions.unsetSuper}
+          />
+          <DemoButton
+            title="Clear Super"
+            onPress={_propertyActions.clearSuper}
+          />
+          <DemoButton title="Get Preset" onPress={_propertyActions.getPreset} />
+          <DemoButton
+            title="Set Preset Events"
+            onPress={_propertyActions.setPresetEvent}
+          />
+        </Section>
+
+        <Section title="渠道&ID">
+          <DemoButton
+            title="Set OAID"
+            onPress={_platformActions.setOAID}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Set GAID"
+            onPress={_platformActions.setGAID}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Set Channel"
+            onPress={_platformActions.setChannel}
+            color="#4CAF50"
+          />
+        </Section>
+
+        <Section title="事件埋点">
+          <DemoButton title="Custom Event" onPress={_eventActions.custom} />
+          <DemoButton title="First Event" onPress={_eventActions.first} />
+          <DemoButton title="Event Start" onPress={_eventActions.start} />
+          <DemoButton title="Event End" onPress={_eventActions.end} />
+          <DemoButton title="Report Now" onPress={_eventActions.reportNow} />
+        </Section>
+
+        <Section title="业务事件">
+          <DemoButton title="AD Imp" onPress={_specificActions.adImp} />
+          <DemoButton title="AD Click" onPress={_specificActions.adClick} />
+          <DemoButton title="IAP" onPress={_specificActions.iap} />
+          <DemoButton title="App Attr" onPress={_specificActions.appAttr} />
+          <DemoButton title="Order" onPress={_specificActions.order} />
+          <DemoButton title="Register" onPress={_specificActions.register} />
+          <DemoButton title="Business Login" onPress={_specificActions.login} />
+          <DemoButton
+            title="Re-Engagement"
+            onPress={_specificActions.reEngagement}
+          />
+        </Section>
+
+        <Section title="用户属性">
+          <DemoButton title="Init" onPress={_userPropActions.init} />
+          <DemoButton title="Update" onPress={_userPropActions.update} />
+          <DemoButton title="Add" onPress={_userPropActions.add} />
+          <DemoButton title="Unset" onPress={_userPropActions.unset} />
+          <DemoButton title="Append" onPress={_userPropActions.append} />
+          <DemoButton title="Delete" onPress={_userPropActions.delete} />
+        </Section>
+
+        <Section title="归因与DeepLink">
+          <DemoButton
+            title="Retrieve Attr"
+            onPress={_attrActions.retrieveAttr}
+          />
+          <DemoButton title="Open URL" onPress={_attrActions.openUrl} />
+        </Section>
+
+        <Section title="远程配置">
+          <DemoButton
+            title="Set Defaults"
+            onPress={_remoteConfigActions.setDefault}
+          />
+          <DemoButton
+            title="Set Event Props"
+            onPress={_remoteConfigActions.setEventProps}
+          />
+          <DemoButton
+            title="Set User Props"
+            onPress={_remoteConfigActions.setUserProps}
+          />
+          <DemoButton
+            title="Fast Fetch"
+            onPress={_remoteConfigActions.fastFetch}
+          />
+          <DemoButton
+            title="Fast Fetch Key"
+            onPress={_remoteConfigActions.fastFetchKey}
+          />
+          <DemoButton
+            title="Async Fetch"
+            onPress={_remoteConfigActions.asyncFetch}
+          />
+          <DemoButton
+            title="Async Fetch Key"
+            onPress={_remoteConfigActions.asyncFetchKey}
+          />
+        </Section>
+
+        <Section title="平台专用">
+          {Platform.OS === 'ios' && (
+            <>
+              <DemoButton
+                title="Request ATT"
+                onPress={_platformActions.iosATT}
+                color="#009688"
+              />
+              <DemoButton
+                title="SKAN Update"
+                onPress={_platformActions.iosSKAN}
+                color="#009688"
+              />
+            </>
+          )}
+        </Section>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  header: {
+    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+  headerTitle: { fontSize: 22, fontWeight: 'bold' },
+  headerSubtitle: { marginTop: 6, fontSize: 13, fontWeight: '600' },
+  scrollContent: { paddingBottom: 40 },
+  section: { marginTop: 20, paddingHorizontal: 15 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 10,
+    color: '#616161',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+    paddingLeft: 10,
   },
+  buttonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  buttonWrapper: { width: '48%', margin: '1%' },
 });

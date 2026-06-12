@@ -1,10 +1,17 @@
 buildscript {
     ext {
+        def localProperties = new Properties()
+        def localPropertiesFile = file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.withInputStream { localProperties.load(it) }
+        }
+        def resolvedNdkVersion = localProperties.getProperty("ndk.dir") ? new File(localProperties.getProperty("ndk.dir")).name : "27.1.12297006"
+
         buildToolsVersion = "35.0.0"
         minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 35
-        ndkVersion = "27.1.12297006"
+        ndkVersion = resolvedNdkVersion
         kotlinVersion = "2.0.21"
     }
     repositories {
