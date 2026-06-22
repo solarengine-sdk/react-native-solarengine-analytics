@@ -17,6 +17,7 @@
     "lib",
     "android",
     "ios",
+    "harmony",
     "cpp",
     "*.podspec",
     "react-native.config.js",
