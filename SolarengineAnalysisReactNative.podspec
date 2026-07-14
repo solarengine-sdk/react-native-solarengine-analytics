@@ -1,4 +1,5 @@
 require "json"
+require "rubygems"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
@@ -7,6 +8,7 @@ isMainlandChain = false
 
 # 根据条件设置 podname
 solar_engine_pod_name = "SolarEngineSDK"
+minimum_ios_sdk_version = Gem::Version.new('1.3.2')
 
 ENV['SOLARENGINE_IOS_SDK_VERSION'] ||= ''
 
@@ -32,6 +34,11 @@ else
 end
 
 puts "SolarEngine iOS sdk version: #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
+
+if ENV['SOLARENGINE_IOS_SDK_VERSION'] && !ENV['SOLARENGINE_IOS_SDK_VERSION'].strip.empty? &&
+   Gem::Version.new(ENV['SOLARENGINE_IOS_SDK_VERSION']) < minimum_ios_sdk_version
+  raise "SolarEngine iOS SDK version #{ENV['SOLARENGINE_IOS_SDK_VERSION']} is too old; eventAlias requires >= 1.3.2"
+end
 
 Pod::Spec.new do |s|
   s.name         = "SolarengineAnalysisReactNative"

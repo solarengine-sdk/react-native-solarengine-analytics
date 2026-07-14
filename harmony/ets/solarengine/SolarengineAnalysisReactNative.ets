@@ -660,7 +660,10 @@ export class SolarengineAnalysisReactNative extends TurboModule {
           customEventModel.checkId = firstCheckId;
           customEventModel.preProperties = eventAttribute[SEConstant.First_Custom_EVENT_PRE];
           customEventModel.customProperties = eventAttribute[SEConstant.First_Custom_EVENT_CUSTOM] || {};
-          customEventModel.eventAlias = eventAttribute[SEConstant.Event_ALIAS] || "";
+          const eventAlias = eventAttribute[SEConstant.Event_ALIAS] as string | undefined;
+          if (eventAlias) {
+            customEventModel.eventAlias = eventAlias;
+          }
           SolarEngineManager.trackFirstEvent(customEventModel);
           break;
       }
@@ -760,11 +763,12 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       console.log(_SolarEngineLog, "eventEnd", eventName, JSON.stringify(attributes));
     }
     try {
-      SolarEngineManager.eventFinish(
-        eventName,
-        attributes as Record<string, object>,
-        eventAlias || ""
-      );
+      const eventProperties = attributes as Record<string, object>;
+      if (eventAlias) {
+        SolarEngineManager.eventFinish(eventName, eventProperties, eventAlias);
+      } else {
+        SolarEngineManager.eventFinish(eventName, eventProperties);
+      }
     } catch (error) {
       console.error(`${_SolarEngineLog} eventEnd failed:`, error);
     }

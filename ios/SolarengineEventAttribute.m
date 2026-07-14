@@ -60,8 +60,9 @@ NSString * const Paypal                    = @"paypal";
             attribute.presetProperties = receivedDict2;
         }
 
-        if ([eventAttribute[@"eventAlias"] isKindOfClass:[NSString class]]) {
-            [attribute setCustomEventAlias:eventAttribute[@"eventAlias"]];
+        NSString *eventAlias = eventAttribute[@"eventAlias"];
+        if ([eventAlias isKindOfClass:[NSString class]] && eventAlias.length > 0) {
+            [attribute setCustomEventAlias:eventAlias];
         }
     }
     return attribute;
