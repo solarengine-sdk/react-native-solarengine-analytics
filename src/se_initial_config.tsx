@@ -13,9 +13,6 @@ export type se_initial_config = {
   //If your application operates in the European Union region, it needs to comply with the regulations of the EU privacy protection law (regarding GDPR). Please be sure to set isGDPRArea(true) when the user refuses to collect sensitive device information. The default is to collect.
   enableGDPR?: boolean;
 
-  //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether they agree to send their data to Google into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
-  enableUserData?: boolean;
-
   //If your application needs to comply with the Children's Online Privacy Protection Act (COPPA) regulations, set setCoppaEnabled = true.
   enableCoppa?: boolean;
 
@@ -25,29 +22,68 @@ export type se_initial_config = {
   //Whether to enable the deferred Deeplink, the default is NO (closed).
   enableDeferredDeeplink?: boolean;
 
+  /************** Shared switches (supported by at least two platforms) *****************/
+  //Whether to enable attribution service (incl. deeplink / deferred deeplink). Default true.
+  enableAttribution?: boolean;
+  //Whether to enable analytics service (A/B testing, online params). Default true. If both this and enableAttribution are false, SDK reports nothing.
+  enableAnalytics?: boolean;
+
+  /************** Shared data collection switches (supported by at least two platforms, default true) *****************/
+  //Collect device language.
+  enableLanguage?: boolean;
+  //Collect device locale/region.
+  enableLocale?: boolean;
+  //Collect device timezone.
+  enableTimeZone?: boolean;
+  //Collect screen width/height.
+  enableScreenWH?: boolean;
+  //Collect screen density. Android and Harmony.
+  enableDensity?: boolean;
+  //Collect network status.
+  enableNetworkType?: boolean;
+  //Collect User Agent.
+  enableUA?: boolean;
+  //Collect IPv6 address.
+  enableIPV6?: boolean;
+  //Collect OAID. Android and Harmony.
+  enableOAID?: boolean;
+
   /************** Android only, if need *****************/
   android?: {
     //If you need to use meta attribution, set the meta appid here.
     metaAppId?: string;
 
-    //Whether to enable OAID collection. Android only.
-    isOAIDEnabled?: boolean;
-
-    //这里 bridge层找的是android->enablePersonalizedAd和android->enableUserData，所以需要放在android里
     //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether Google is allowed to use their data for personalized advertising into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
     enablePersonalizedAd?: boolean;
     //If your application operates in the European Union region and is promoted on Google, be sure to pass the result of the user's opinion on whether they agree to send their data to Google into this attribute to ensure that you comply with Google's new policy on soliciting opinions from EU users.
     enableUserData?: boolean;
+
+    //Whether to enable IMEI collection. Android only. Default true.
+    isImeiEnabled?: boolean;
+    //Whether to enable Android ID collection. Android only. Default true.
+    isAndroidIDEnabled?: boolean;
+    //Whether to support multi-process. Android only.
+    supportMultiProcess?: boolean;
+    //Whether to disable OAID retry. Android only.
+    withDisableOAIDRetry?: boolean;
+    //Whether to disable GAID retry. Android only. SDK Builder method name is witDisableGAIDRetry (typo, missing 'h').
+    withDisableGAIDRetry?: boolean;
   };
 
   harmony?: {
     authorizationTimeout?: number;
+    //Collect ODID. Harmony only.
+    enableODID?: boolean;
+    //Collect AAID. Harmony only.
+    enableAAID?: boolean;
   };
 
   /************** iOS only, if need *****************/
   ios?: {
     attAuthorizationWaitingInterval?: number;
     caid?: string;
+    // iOS only (overseas SDK). Enables ODM info attribution for Google iOS campaigns. Default false. Not supported on the CN SDK.
+    enableODMInfo?: boolean;
   };
 };
 

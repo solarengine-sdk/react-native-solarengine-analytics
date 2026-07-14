@@ -320,9 +320,23 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableUserData = androidConfigs.getBoolean("enableUserData")
       seConfig.adUserDataEnabled(enableUserData)
     }
-    if (androidConfigs?.hasKey("isOAIDEnabled") == true) {
-      val isOAIDEnabled = androidConfigs.getBoolean("isOAIDEnabled")
-      seConfig.isOAIDEnabled(isOAIDEnabled)
+    if (configMap?.hasKey("enableOAID") == true) {
+      seConfig.isOAIDEnabled(configMap.getBoolean("enableOAID"))
+    }
+    if (androidConfigs?.hasKey("isImeiEnabled") == true) {
+      seConfig.isImeiEnabled(androidConfigs.getBoolean("isImeiEnabled"))
+    }
+    if (androidConfigs?.hasKey("isAndroidIDEnabled") == true) {
+      seConfig.isAndroidIDEnabled(androidConfigs.getBoolean("isAndroidIDEnabled"))
+    }
+    if (androidConfigs?.hasKey("supportMultiProcess") == true) {
+      seConfig.supportMultiProcess(androidConfigs.getBoolean("supportMultiProcess"))
+    }
+    if (androidConfigs?.hasKey("withDisableOAIDRetry") == true) {
+      seConfig.withDisableOAIDRetry(androidConfigs.getBoolean("withDisableOAIDRetry"))
+    }
+    if (androidConfigs?.hasKey("withDisableGAIDRetry") == true) {
+      seConfig.witDisableGAIDRetry(androidConfigs.getBoolean("withDisableGAIDRetry")) // SDK typo: witDisableGAIDRetry (missing 'h')
     }
     /*
     ts model keys:
@@ -443,6 +457,41 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val enableDeferredDeeplink = configMap.getBoolean("enableDeferredDeeplink")
       seConfig.enableDeferredDeeplink = enableDeferredDeeplink
     }
+
+    // Core switches (1.3.2+)
+    if (configMap?.hasKey("enableAttribution") == true) {
+      seConfig.enableAttribution(configMap.getBoolean("enableAttribution"))
+    }
+    if (configMap?.hasKey("enableAnalytics") == true) {
+      seConfig.enableAnalytics(configMap.getBoolean("enableAnalytics"))
+    }
+
+    // Data collection switches (1.3.2+, default true)
+    if (configMap?.hasKey("enableLanguage") == true) {
+      seConfig.enableLanguage(configMap.getBoolean("enableLanguage"))
+    }
+    if (configMap?.hasKey("enableLocale") == true) {
+      seConfig.enableLocale(configMap.getBoolean("enableLocale"))
+    }
+    if (configMap?.hasKey("enableTimeZone") == true) {
+      seConfig.enableTimeZone(configMap.getBoolean("enableTimeZone"))
+    }
+    if (configMap?.hasKey("enableScreenWH") == true) {
+      seConfig.enableScreenWH(configMap.getBoolean("enableScreenWH"))
+    }
+    if (configMap?.hasKey("enableDensity") == true) {
+      seConfig.enableDensity(configMap.getBoolean("enableDensity"))
+    }
+    if (configMap?.hasKey("enableNetworkType") == true) {
+      seConfig.enableNetworkType(configMap.getBoolean("enableNetworkType"))
+    }
+    if (configMap?.hasKey("enableUA") == true) {
+      seConfig.enableUA(configMap.getBoolean("enableUA"))
+    }
+    if (configMap?.hasKey("enableIPV6") == true) {
+      seConfig.enableIPV6Address(configMap.getBoolean("enableIPV6"))
+    }
+    // enableODID / enableAAID are Harmony-only; Android 1.3.2 SolarEngineConfig.Builder has no such methods.
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
     solarEngineConfig.setOnAttributionListener(object : OnAttributionListener {
       override fun onAttributionSuccess(attribution: JSONObject) {
@@ -725,7 +774,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   }
   /************** Custom Event *****************/
   @ReactMethod
-  override fun trackCustomEvent(eventName:String,customProperties:ReadableMap?, preProperties:ReadableMap?){
+  override fun trackCustomEvent(eventName:String,customProperties:ReadableMap?, preProperties:ReadableMap?, eventAlias:String?){
     log("eventName: $eventName","trackCustomEvent")
 
     val attribute = SECustomEventModel()
@@ -738,6 +787,9 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val jObject = SolarEngineRNUtils.convertMapToJson(preProperties)
       attribute.preEventData = jObject
     }
+    if (!eventAlias.isNullOrEmpty()) {
+      attribute.setCustomEventAlias(eventAlias)
+    }
 
     SolarEngineManager.getInstance().track(attribute)
   }
@@ -749,10 +801,15 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     SolarEngineManager.getInstance().eventStart(eventName)
   }
   @ReactMethod
-  override fun eventEnd(eventName:String,properties:ReadableMap?){
+  override fun eventEnd(eventName:String,properties:ReadableMap?, eventAlias:String?){
     log("properties: $properties","eventEnd")
-    val jObject: JSONObject? = SolarEngineRNUtils.convertMapToJson(properties)
-    SolarEngineManager.getInstance().eventFinish(eventName,jObject)
+    val jObject = SolarEngineRNUtils.convertMapToJson(properties)
+    val manager = SolarEngineManager.getInstance()
+    if (!eventAlias.isNullOrEmpty()) {
+      manager.eventFinish(eventName, jObject, eventAlias)
+    } else {
+      manager.eventFinish(eventName, jObject)
+    }
   }
   /************** First-Time Event *****************/
   @ReactMethod

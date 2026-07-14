@@ -14,6 +14,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 +(SECustomEventAttribute *)customEventAttribute:(NSDictionary *)eventAttribute;
 
++(SECustomEventAttribute *)customEventAttributeWithEventName:(NSString *)eventName
+                                            customProperties:(nullable NSDictionary *)customProperties
+                                               preProperties:(nullable NSDictionary *)preProperties
+                                                  eventAlias:(nullable NSString *)eventAlias;
+
 +(SEAdImpressionEventAttribute *)adImpressionEventAttribute:(NSDictionary *)eventAttribute;
 
 +(SEAdClickEventAttribute *)adClickEventAttribute:(NSDictionary *)eventAttribute;

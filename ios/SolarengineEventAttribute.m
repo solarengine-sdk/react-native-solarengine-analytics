@@ -16,6 +16,26 @@ NSString * const Paypal                    = @"paypal";
 
 @implementation SolarengineEventAttribute
 
++(SECustomEventAttribute *)customEventAttributeWithEventName:(NSString *)eventName
+                                            customProperties:(nullable NSDictionary *)customProperties
+                                               preProperties:(nullable NSDictionary *)preProperties
+                                                  eventAlias:(nullable NSString *)eventAlias{
+    NSMutableDictionary *eventAttribute = [[NSMutableDictionary alloc] init];
+    if (eventName) {
+        eventAttribute[@"eventName"] = eventName;
+    }
+    if (customProperties) {
+        eventAttribute[@"customProperties"] = customProperties;
+    }
+    if (preProperties) {
+        eventAttribute[@"preProperties"] = preProperties;
+    }
+    if (eventAlias.length > 0) {
+        eventAttribute[@"eventAlias"] = eventAlias;
+    }
+    return [self customEventAttribute:eventAttribute];
+}
+
 +(SECustomEventAttribute *)customEventAttribute:(NSDictionary *)eventAttribute{
     
     SECustomEventAttribute *attribute = nil;
@@ -38,6 +58,10 @@ NSString * const Paypal                    = @"paypal";
         NSDictionary *receivedDict2 = [RCTConvert NSDictionary:receivedObject2];
         if ([receivedDict2 isKindOfClass:[NSDictionary class]]) {
             attribute.presetProperties = receivedDict2;
+        }
+
+        if ([eventAttribute[@"eventAlias"] isKindOfClass:[NSString class]]) {
+            [attribute setCustomEventAlias:eventAttribute[@"eventAlias"]];
         }
     }
     return attribute;

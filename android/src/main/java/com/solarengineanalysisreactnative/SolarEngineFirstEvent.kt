@@ -35,6 +35,12 @@ class SolarEngineFirstEvent {
           attribute.preEventData = jObject
         }
       }
+      if (eventAttribute.hasKey("eventAlias")){
+        val alias = eventAttribute.getString("eventAlias")
+        if (!alias.isNullOrEmpty()) {
+          attribute.setCustomEventAlias(alias)
+        }
+      }
 
       return attribute
     }

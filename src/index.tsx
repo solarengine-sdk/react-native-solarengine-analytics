@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.7.1';
+const SolarEnginePluginVersion = '1.7.2';
 
 import type {
   SolarEngineInitiateOptions,
@@ -500,12 +500,14 @@ export function trackLoginWithAttributes(
 export function trackCustomEvent(
   eventName: string,
   customProperties?: Object,
-  preProperties?: Object
+  preProperties?: Object,
+  eventAlias?: string
 ) {
   SolarengineAnalysis.trackCustomEvent(
     eventName,
     customProperties,
-    preProperties
+    preProperties,
+    eventAlias
   );
 }
 
@@ -513,8 +515,12 @@ export function trackCustomEvent(
 export function eventStart(eventName: string) {
   SolarengineAnalysis.eventStart(eventName);
 }
-export function eventEnd(eventName: string, properties?: Object) {
-  SolarengineAnalysis.eventEnd(eventName, properties);
+export function eventEnd(
+  eventName: string,
+  properties?: Object,
+  eventAlias?: string
+) {
+  SolarengineAnalysis.eventEnd(eventName, properties, eventAlias);
 }
 /************** First-Time Event *****************/
 export function trackFirstEvent(

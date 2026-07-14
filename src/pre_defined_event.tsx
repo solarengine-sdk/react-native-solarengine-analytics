@@ -2,6 +2,7 @@ declare type SECustomEventAttribute = {
   eventName: string;
   customProperties: Object;
   preProperties: Object;
+  eventAlias?: string;
 };
 declare type SEAdImpressionEventAttribute = {
   adNetworkPlatform: string;

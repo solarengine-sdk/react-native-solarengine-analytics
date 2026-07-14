@@ -54,12 +54,13 @@ export interface Spec extends TurboModule {
   trackCustomEvent(
     eventName: string,
     customProperties?: Object,
-    preProperties?: Object
+    preProperties?: Object,
+    eventAlias?: string
   ): void;
 
   // Duration Event
   eventStart(eventName: string): void;
-  eventEnd(eventName: string, properties?: Object): void;
+  eventEnd(eventName: string, properties?: Object, eventAlias?: string): void;
 
   // First-Time Event
   trackFirstEvent(firstCheckId: string, eventAttribute: Object): void;

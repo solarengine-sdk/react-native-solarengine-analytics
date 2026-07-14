@@ -17,6 +17,7 @@
 #import <StoreKit/SKAdNetwork.h>
 #else
 #endif
+#import <objc/message.h>
 
 
 
@@ -29,6 +30,14 @@ RCT_EXPORT_MODULE()
 
 
 static BOOL solarengine_log_controll = NO;
+
+static NSString *SEValidEventAlias(NSString *eventAlias) {
+  if (!eventAlias || [eventAlias isEqual:[NSNull null]] || eventAlias.length == 0) {
+    return nil;
+  }
+
+  return eventAlias;
+}
 
 
 +(void)log:(id)obj method:(SEL)sel{
@@ -218,7 +227,7 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
     }
     
     BOOL enableLog = NO;
-    if (config[@"enableLog"]) {
+    if (config[@"enableLog"] != nil) {
       enableLog = [config[@"enableLog"] boolValue];
       
       remote.logEnabled = enableLog;
@@ -237,18 +246,18 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
   }
   
   BOOL enableLog = NO;
-  if (config[@"enableLog"]) {
+  if (config[@"enableLog"] != nil) {
     enableLog = [config[@"enableLog"] boolValue];
     seconfig.logEnabled = enableLog;
     solarengine_log_controll = enableLog;
   }
   BOOL enable2G = NO;
-  if (config[@"enable2G"]) {
+  if (config[@"enable2G"] != nil) {
     enable2G = [config[@"enable2G"] boolValue];
     seconfig.enable2GReporting = enable2G;
   }
   BOOL enableDebug = NO;
-  if (config[@"enableDebug"]) {
+  if (config[@"enableDebug"] != nil) {
     enableDebug = [config[@"enableDebug"] boolValue];
     seconfig.isDebugModel = enableDebug;
   }
@@ -256,29 +265,62 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
   ;
 #else
   BOOL enableCoppa = NO;
-  if (config[@"enableCoppa"]) {
+  if (config[@"enableCoppa"] != nil) {
     enableCoppa = [config[@"enableCoppa"] boolValue];
     seconfig.setCoppaEnabled = enableCoppa;
   }
   BOOL enableGDPR = NO;
-  if (config[@"enableGDPR"]) {
+  if (config[@"enableGDPR"] != nil) {
     enableGDPR = [config[@"enableGDPR"] boolValue];
     seconfig.isGDPRArea = enableGDPR;
   }
   BOOL enableKidsApp = NO;
-  if (config[@"enableKidsApp"]) {
+  if (config[@"enableKidsApp"] != nil) {
     enableKidsApp = [config[@"enableKidsApp"] boolValue];
     seconfig.setKidsAppEnabled = enableKidsApp;
+  }
+  if (iosConfigs[@"enableODMInfo"] != nil) {
+    seconfig.enableODMInfo = [iosConfigs[@"enableODMInfo"] boolValue];
   }
 #endif
   
   BOOL enableDeferredDeeplink = NO;
-  if (config[@"enableDeferredDeeplink"]) {
+  if (config[@"enableDeferredDeeplink"] != nil) {
     enableDeferredDeeplink = [config[@"enableDeferredDeeplink"] boolValue];
     seconfig.enableDeferredDeeplink = enableDeferredDeeplink;
   }
-  
-  
+
+  // Core switches (1.3.2+)
+  if (config[@"enableAttribution"] != nil) {
+    seconfig.enableAttribution = [config[@"enableAttribution"] boolValue];
+  }
+  if (config[@"enableAnalytics"] != nil) {
+    seconfig.enableAnalytics = [config[@"enableAnalytics"] boolValue];
+  }
+
+  // Data collection switches (1.3.2+, default true)
+  if (config[@"enableLanguage"] != nil) {
+    seconfig.enableLanguage = [config[@"enableLanguage"] boolValue];
+  }
+  if (config[@"enableLocale"] != nil) {
+    seconfig.enableLocale = [config[@"enableLocale"] boolValue];
+  }
+  if (config[@"enableTimeZone"] != nil) {
+    seconfig.enableTimeZone = [config[@"enableTimeZone"] boolValue];
+  }
+  if (config[@"enableScreenWH"] != nil) {
+    seconfig.enableScreenWH = [config[@"enableScreenWH"] boolValue];
+  }
+  if (config[@"enableNetworkType"] != nil) {
+    seconfig.enableNetworkType = [config[@"enableNetworkType"] boolValue];
+  }
+  if (config[@"enableUA"] != nil) {
+    seconfig.enableUA = [config[@"enableUA"] boolValue];
+  }
+  if (config[@"enableIPV6"] != nil) {
+    seconfig.enableIPV6 = [config[@"enableIPV6"] boolValue];
+  }
+
   [SolarengineAnalysisReactNative log:config method:_cmd];
   [[SolarEngineSDK sharedInstance] startWithAppKey:appKey config:seconfig];
 }
@@ -604,20 +646,46 @@ RCT_EXPORT_METHOD(trackLoginWithAttributes:(NSDictionary *)eventAttribute) {
 #endif
 
 // MARK: - trackCustomEvent
-- (void)_trackCustomEvent:(NSString *)eventName customProperties:(NSDictionary *)customProperties presetProperties:(NSDictionary *)presetProperties {
-  [[SolarEngineSDK sharedInstance] track:eventName
-                    withCustomProperties:customProperties
-                    withPresetProperties:presetProperties];
+- (void)_trackCustomEvent:(NSString *)eventName
+         customProperties:(NSDictionary *)customProperties
+         presetProperties:(NSDictionary *)presetProperties
+               eventAlias:(NSString *)eventAlias {
+  SolarEngineSDK *sdk = [SolarEngineSDK sharedInstance];
+  NSString *validEventAlias = SEValidEventAlias(eventAlias);
+  if (validEventAlias) {
+    SECustomEventAttribute *attribute =
+        [SolarengineEventAttribute customEventAttributeWithEventName:eventName
+                                                    customProperties:customProperties
+                                                       preProperties:presetProperties
+                                                          eventAlias:validEventAlias];
+    [sdk trackCustomEvent:attribute];
+  } else {
+    [sdk track:eventName
+        withCustomProperties:customProperties
+        withPresetProperties:presetProperties];
+  }
 }
 
 #ifdef RCT_NEW_ARCH_ENABLED
 //- (void)trackCustomEvent:(NSString *)eventName customProperties:(NSDictionary *)customProperties presetProperties:(NSDictionary *)presetProperties {
-- (void)trackCustomEvent:(nonnull NSString *)eventName customProperties:(nonnull NSDictionary *)customProperties preProperties:(nonnull NSDictionary *)preProperties {
-  [self _trackCustomEvent:eventName customProperties:customProperties presetProperties:preProperties];
+- (void)trackCustomEvent:(nonnull NSString *)eventName
+        customProperties:(nonnull NSDictionary *)customProperties
+           preProperties:(nonnull NSDictionary *)preProperties
+              eventAlias:(NSString *)eventAlias {
+  [self _trackCustomEvent:eventName
+         customProperties:customProperties
+         presetProperties:preProperties
+               eventAlias:eventAlias];
 }
 #else
-RCT_EXPORT_METHOD(trackCustomEvent:(NSString *)eventName customProperties:(NSDictionary *)customProperties preProperties:(NSDictionary *)preProperties) {
-  [self _trackCustomEvent:eventName customProperties:customProperties presetProperties:preProperties];
+RCT_EXPORT_METHOD(trackCustomEvent:(NSString *)eventName
+                  customProperties:(NSDictionary *)customProperties
+                  preProperties:(NSDictionary *)preProperties
+                  eventAlias:(NSString *)eventAlias) {
+  [self _trackCustomEvent:eventName
+         customProperties:customProperties
+         presetProperties:preProperties
+               eventAlias:eventAlias];
 }
 #endif
 
@@ -637,17 +705,29 @@ RCT_EXPORT_METHOD(eventStart:(NSString *)eventName) {
 #endif
 
 // MARK: - eventEnd
-- (void)_eventEnd:(NSString *)eventName properties:(NSDictionary *)properties {
-  [[SolarEngineSDK sharedInstance] eventFinish:eventName properties:properties];
+- (void)_eventEnd:(NSString *)eventName
+       properties:(NSDictionary *)properties
+       eventAlias:(NSString *)eventAlias {
+  SolarEngineSDK *sdk = [SolarEngineSDK sharedInstance];
+  NSString *validEventAlias = SEValidEventAlias(eventAlias);
+  if (validEventAlias) {
+    [sdk eventFinish:eventName properties:properties customEventAlias:validEventAlias];
+  } else {
+    [sdk eventFinish:eventName properties:properties];
+  }
 }
 
 #ifdef RCT_NEW_ARCH_ENABLED
-- (void)eventEnd:(NSString *)eventName properties:(NSDictionary *)properties {
-  [self _eventEnd:eventName properties:properties];
+- (void)eventEnd:(NSString *)eventName
+      properties:(NSDictionary *)properties
+      eventAlias:(NSString *)eventAlias {
+  [self _eventEnd:eventName properties:properties eventAlias:eventAlias];
 }
 #else
-RCT_EXPORT_METHOD(eventEnd:(NSString *)eventName properties:(NSDictionary *)properties) {
-  [self _eventEnd:eventName properties:properties];
+RCT_EXPORT_METHOD(eventEnd:(NSString *)eventName
+                  properties:(NSDictionary *)properties
+                  eventAlias:(NSString *)eventAlias) {
+  [self _eventEnd:eventName properties:properties eventAlias:eventAlias];
 }
 #endif
 
