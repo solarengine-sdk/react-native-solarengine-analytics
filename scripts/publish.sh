@@ -32,6 +32,8 @@ npm version "$VERSION" --no-git-tag-version --no-commit-hooks
 # 4. oversea: strip -cn suffix from package name
 if [ "$CHANNEL" = "oversea" ]; then
   node -e "const f='./package.json';const p=JSON.parse(require('fs').readFileSync(f));p.name='solarengine-analysis-react-native';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
+  # re-resolve workspace + lockfile with the new name (was -cn)
+  yarn install
 fi
 
 echo "==> package: $(node -p "require('./package.json').name") @ $(node -p "require('./package.json').version")"
