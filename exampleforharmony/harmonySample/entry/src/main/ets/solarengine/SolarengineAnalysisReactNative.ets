@@ -251,7 +251,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
 
   initialize(appkey: string, config: object, rcConfig: object, customDomain: object) {
     if (_log) {
-      console.log(`${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
+      console.log(
+        `${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
     }
     try {
       const solarEngineConfig = new SolarEngineConfig();
@@ -272,6 +273,18 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       }
       solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G];
       solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6];
+      solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID];
+      solarEngineConfig.enableODID = config[SolarEngineConfigConstant.EnableODID];
+      solarEngineConfig.enableAAID = config[SolarEngineConfigConstant.EnableAAID];
+      solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution];
+      solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics];
+      solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage];
+      solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale];
+      solarEngineConfig.enableTimeZone = config[SolarEngineConfigConstant.EnableTimeZone];
+      solarEngineConfig.enableScreenWH = config[SolarEngineConfigConstant.EnableScreenWH];
+      solarEngineConfig.enableDensity = config[SolarEngineConfigConstant.EnableDensity];
+      solarEngineConfig.enableNetworkType = config[SolarEngineConfigConstant.EnableNetworkType];
+      solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA];
 
 
       if (rcConfig) {
@@ -312,11 +325,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     if (_log) {
       console.log(_SolarEngineLog, "setChannel", channel);
     }
-    try {
-      SolarEngineManager.setChannel(channel);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setChannel failed:`, error);
-    }
+    // SolarEngine 2.0.0 removed the public setChannel API; no-op on harmony.
+    console.warn(`${_SolarEngineLog} setChannel is not supported since SolarEngine 2.0.0`);
   }
 
   setVisitorID(visitor: string) {
@@ -586,7 +596,12 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  trackCustomEvent(customEventName: string, customProperties: object, preAttributes?: object): void {
+  trackCustomEvent(
+    customEventName: string,
+    customProperties: object,
+    preAttributes?: object,
+    eventAlias?: string
+  ): void {
     if (_log) {
       console.log(_SolarEngineLog, "trackCustomEvent", JSON.stringify(customProperties));
     }
@@ -596,6 +611,9 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       customEventModel.customProperties = customProperties as Record<string, object>;
       if (preAttributes) {
         customEventModel.preProperties = preAttributes as Record<string, object>;
+      }
+      if (eventAlias) {
+        customEventModel.eventAlias = eventAlias;
       }
       SolarEngineManager.trackCustom(customEventModel);
     } catch (error) {
@@ -637,6 +655,7 @@ export class SolarengineAnalysisReactNative extends TurboModule {
           customEventModel.checkId = firstCheckId;
           customEventModel.preProperties = eventAttribute[SEConstant.First_Custom_EVENT_PRE];
           customEventModel.customProperties = eventAttribute[SEConstant.First_Custom_EVENT_CUSTOM] || {};
+          customEventModel.eventAlias = eventAttribute[SEConstant.Event_ALIAS] || "";
           SolarEngineManager.trackFirstEvent(customEventModel);
           break;
       }
@@ -731,12 +750,16 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  eventEnd(eventName: string, attributes: object): void {
+  eventEnd(eventName: string, attributes: object, eventAlias?: string): void {
     if (_log) {
       console.log(_SolarEngineLog, "eventEnd", eventName, JSON.stringify(attributes));
     }
     try {
-      SolarEngineManager.eventFinish(eventName, attributes as Record<string, object>);
+      SolarEngineManager.eventFinish(
+        eventName,
+        attributes as Record<string, object>,
+        eventAlias || ""
+      );
     } catch (error) {
       console.error(`${_SolarEngineLog} eventEnd failed:`, error);
     }
@@ -1114,6 +1137,18 @@ export class SolarEngineConfigConstant {
   public static readonly AuthorizationTimeout = "authorizationTimeout"
   public static readonly Harmony = "harmony";
   public static readonly EnableIPV6 = "enableIPV6";
+  public static readonly EnableOAID = "enableOAID";
+  public static readonly EnableODID = "enableODID";
+  public static readonly EnableAAID = "enableAAID";
+  public static readonly EnableAttribution = "enableAttribution";
+  public static readonly EnableAnalytics = "enableAnalytics";
+  public static readonly EnableLanguage = "enableLanguage";
+  public static readonly EnableLocale = "enableLocale";
+  public static readonly EnableTimeZone = "enableTimeZone";
+  public static readonly EnableScreenWH = "enableScreenWH";
+  public static readonly EnableDensity = "enableDensity";
+  public static readonly EnableNetworkType = "enableNetworkType";
+  public static readonly EnableUA = "enableUA";
   public static readonly RCEnable = "enable";
   public static readonly RCMergeType = "mergeType";
   public static readonly RCCustomIDProperties = "customIDProperties";
@@ -1122,6 +1157,7 @@ export class SolarEngineConfigConstant {
 }
 
 export class SEConstant {
+  public static readonly Event_ALIAS: string = "eventAlias";
   public static readonly First_INNER_TYPE: string = "sdk_inner_type";
   public static readonly First_CustomProperties: string = "customProperties";
   public static readonly First_Register_EVENT: string = "Register";

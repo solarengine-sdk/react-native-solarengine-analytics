@@ -36,7 +36,7 @@ import {
 } from 'solarengine-analysis-react-native';
 
 const AndroidAppKey = '82770189c354de18';
-//const iOSAppKey = '07df077973a84ea7';//海外b012bf6e500c84db
+//const iOSAppKey = '455cd0c9843e503e';//海外b012bf6e500c84db
 
 const iOSAppKey = '16e503718a7305f5'; //海外b012bf6e500c84db
 
@@ -44,6 +44,18 @@ const HMAppKey = '16e503718a7305f5';
 
 const LOG_PREFIX = '[SeSDK Demo]';
 let logSeq = 0;
+type IosAutoRunState = { started: boolean; completed: boolean };
+
+const getIosAutoRunState = (): IosAutoRunState => {
+  const globalState = globalThis as typeof globalThis & {
+    __solarEngineIosAutoRunState?: IosAutoRunState;
+  };
+  globalState.__solarEngineIosAutoRunState ??= {
+    started: false,
+    completed: false,
+  };
+  return globalState.__solarEngineIosAutoRunState;
+};
 
 const nextLogSeq = () => {
   logSeq += 1;
@@ -95,7 +107,14 @@ const DEFAULT_RC_KEYS = [
   'key_object',
 ] as const;
 
+// Manual yarn ios/android commands only launch the Demo; test cases run by user action.
 const IOS_AUTO_RUN_CASES = false;
+const IOS_AUTO_RUN_ALL_FALSE_ONLY = false;
+
+const INITIALIZE_CASES = [
+  { name: 'allEnabled', title: 'Initialize (all enabled)', enabled: true },
+  { name: 'allDisabled', title: 'Initialize (all disabled)', enabled: false },
+] as const;
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -110,38 +129,118 @@ const withCallId = (
 };
 
 const PRESET_EVENT_PROPERTIES = { PresetEvent: 'test' };
-const PRESET_EVENT_TYPES =
-  PresetEventType.INSTALL | PresetEventType.START | PresetEventType.END;
+const PRESET_EVENT_ALL = (PresetEventType.INSTALL |
+  PresetEventType.START |
+  PresetEventType.END) as PresetEventType;
+const getSdkPresetEventTypes = (eventType: PresetEventType) => {
+  switch (eventType) {
+    case PresetEventType.INSTALL:
+      return [0];
+    case PresetEventType.START:
+      return [1];
+    case PresetEventType.END:
+      return [2];
+    case PRESET_EVENT_ALL:
+      return [3];
+    default:
+      return [];
+  }
+};
+const PRESET_EVENT_CASES = [
+  {
+    name: 'APP_INSTALL',
+    eventType: PresetEventType.INSTALL,
+    eventTypeName: 'APP_INSTALL',
+    sdkEventTypes: [0],
+    props: PRESET_EVENT_PROPERTIES,
+  },
+  {
+    name: 'APP_START',
+    eventType: PresetEventType.START,
+    eventTypeName: 'APP_START',
+    sdkEventTypes: [1],
+    props: PRESET_EVENT_PROPERTIES,
+  },
+  {
+    name: 'APP_END',
+    eventType: PresetEventType.END,
+    eventTypeName: 'APP_END',
+    sdkEventTypes: [2],
+    props: PRESET_EVENT_PROPERTIES,
+  },
+  {
+    name: 'ALL',
+    eventType: PRESET_EVENT_ALL,
+    eventTypeName: 'ALL',
+    sdkEventTypes: [3],
+    props: PRESET_EVENT_PROPERTIES,
+  },
+] as const;
 
 const trackVerifyEvent = (eventName: string, callId: number) => {
-  SolarEngine.trackCustomEvent(eventName, withCallId({}, callId), {
-    _currency_type: 'USD',
-    _pay_amount: 1,
-  });
+  SolarEngine.trackCustomEvent(
+    eventName,
+    withCallId({}, callId),
+    {
+      _currency_type: 'USD',
+      _pay_amount: 1,
+    },
+    '验证事件别名'
+  ); // eventAlias
 };
 
-function buildInitialConfig(): se_initial_config {
+function buildInitialConfigSwitches(enabled: boolean) {
   return {
+    enable2G: enabled,
+    enableAnalytics: enabled,
+    enableAttribution: enabled,
+    enableAAID: enabled,
+    enableCoppa: enabled,
+    enableDebug: enabled,
+    enableDeferredDeeplink: enabled,
+    enableDensity: enabled,
+    enableGDPR: enabled,
+    enableIPV6: enabled,
+    enableKidsApp: enabled,
+    enableLanguage: enabled,
+    enableLocale: enabled,
     enableLog: true,
-    enableDebug: true,
-    enable2G: true,
-    enableGDPR: true,
+    enableNetworkType: enabled,
+    enableOAID: enabled,
+    enableODID: enabled,
+    enableScreenWH: enabled,
+    enableTimeZone: enabled,
+    enableUA: enabled,
+    enableUserData: enabled,
+  };
+}
 
-    enableUserData: true,
-    enableCoppa: true,
-    enableKidsApp: true,
-    enableDeferredDeeplink: true,
+function buildInitialConfig(enabled = true): se_initial_config {
+  return {
+    ...buildInitialConfigSwitches(enabled),
+
     android: {
-      enablePersonalizedAd: true,
+      enablePersonalizedAd: enabled,
+      isImeiEnabled: false, // demo: disable IMEI collection
+      isAndroidIDEnabled: enabled,
+      supportMultiProcess: false,
+      withDisableOAIDRetry: false,
+      withDisableGAIDRetry: false,
     },
     ios: {
       attAuthorizationWaitingInterval: 60,
       caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"}]',
+      enableODMInfo: false, // overseas SDK only
     },
     harmony: {
       authorizationTimeout: 100,
     },
   };
+}
+
+// Minimal config: only enableLog. All other fields unset → SDK uses its own defaults (collection switches default true).
+function buildInitialConfigMinimal(): se_initial_config {
+  return { enableLog: true };
 }
 
 function buildRemoteConfig(): RemoteConfig {
@@ -254,12 +353,17 @@ export default function App() {
       });
       SolarEngine.setInternalLogEnabled(true);
     }
-    const appKey = Platform.OS === 'android' ? AndroidAppKey : HMAppKey;
+    const appKey =
+      Platform.OS === 'ios'
+        ? iOSAppKey
+        : Platform.OS === 'android'
+          ? AndroidAppKey
+          : HMAppKey;
     logCall('preInit', { appKey });
     SolarEngine.preInit(appKey);
   };
 
-  const _initialize = (): Promise<InitiateCompletionInfo> => {
+  const _initialize = (enabled = true): Promise<InitiateCompletionInfo> => {
     let appKey = '';
     if (Platform.OS === 'ios') {
       appKey = iOSAppKey;
@@ -269,18 +373,24 @@ export default function App() {
       appKey = HMAppKey;
     }
     log('initialize platform: ' + Platform.OS);
-    logCall('initialize', { platform: Platform.OS, appKey });
-    logCall('setPreSetEventWithProperties.beforeInitialize', {
-      eventType: PRESET_EVENT_TYPES,
-      props: PRESET_EVENT_PROPERTIES,
+    const initializeCase = enabled ? INITIALIZE_CASES[0] : INITIALIZE_CASES[1];
+    logCall('initialize', {
+      platform: Platform.OS,
+      appKey,
+      case: initializeCase.name,
     });
-    SolarEngine.setPreSetEventWithProperties(
-      PRESET_EVENT_TYPES,
-      PRESET_EVENT_PROPERTIES
-    );
+    const config = buildInitialConfig(enabled);
+    logCall('initialize.config', buildInitialConfigSwitches(enabled));
+    for (const presetCase of PRESET_EVENT_CASES) {
+      logCall('setPresetEventProperties', presetCase);
+      SolarEngine.setPreSetEventWithProperties(
+        presetCase.eventType,
+        presetCase.props
+      );
+    }
 
     const options: SolarEngineInitiateOptions = {
-      config: buildInitialConfig(),
+      config,
       remoteConfig: buildRemoteConfig(),
       attribution: handleAttribution,
       deeplink: handleDeepLink,
@@ -293,6 +403,41 @@ export default function App() {
         options,
         (result: InitiateCompletionInfo) => {
           log('Initialize result: ' + JSON.stringify(result));
+          resolve(result);
+        }
+      );
+    });
+  };
+
+  // Initialize with minimal config (only enableLog) to observe SDK default values.
+  const _initializeMinimal = (): Promise<InitiateCompletionInfo> => {
+    let appKey = '';
+    if (Platform.OS === 'ios') {
+      appKey = iOSAppKey;
+    } else if (Platform.OS === 'android') {
+      appKey = AndroidAppKey;
+    } else {
+      appKey = HMAppKey;
+    }
+    log('initialize (log-only) platform: ' + Platform.OS);
+    logCall('initialize.logOnly', {
+      platform: Platform.OS,
+      appKey,
+      config: { enableLog: true },
+    });
+    const options: SolarEngineInitiateOptions = {
+      config: buildInitialConfigMinimal(),
+      remoteConfig: buildRemoteConfig(),
+      attribution: handleAttribution,
+      deeplink: handleDeepLink,
+      deferredDeeplink: handleDeferredDeeplink,
+    };
+    return new Promise((resolve) => {
+      SolarEngine.initialize(
+        appKey,
+        options,
+        (result: InitiateCompletionInfo) => {
+          log('Initialize (log-only) result: ' + JSON.stringify(result));
           resolve(result);
         }
       );
@@ -492,57 +637,144 @@ export default function App() {
         });
       }
     },
-    setPresetEvent: () => {
-      logCall('setPreSetEventWithProperties', {
-        eventType: PRESET_EVENT_TYPES,
+    setPresetEvent: (
+      eventType: PresetEventType = PRESET_EVENT_ALL,
+      eventTypeName = 'ALL'
+    ) => {
+      logCall('setPresetEventProperties', {
+        eventType,
+        eventTypeName,
+        sdkEventTypes: getSdkPresetEventTypes(eventType),
         props: PRESET_EVENT_PROPERTIES,
       });
       SolarEngine.setPreSetEventWithProperties(
-        PRESET_EVENT_TYPES,
+        eventType,
         PRESET_EVENT_PROPERTIES
       );
     },
   };
 
   const _eventActions = {
+    customNormal: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_plain',
+        props: {},
+        preset: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+      SolarEngine.trackCustomEvent('test_event_plain', withCallId({}, callId), {
+        _currency_type: 'USD',
+        _pay_amount: 11,
+      });
+    },
+    customWithoutPrePropertiesNormal: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_no_pre_properties_plain',
+        props: {},
+      });
+      SolarEngine.trackCustomEvent(
+        'test_event_no_pre_properties_plain',
+        withCallId({}, callId)
+      );
+    },
+    firstNormal: () => {
+      const firstEventRunSuffix = `${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+      const registerFirstCheckId = `first_check_plain_1_${firstEventRunSuffix}`;
+      const customFirstCheckId = `first_check_plain_2_${firstEventRunSuffix}`;
+      const callId = logCall('trackFirstEvent', {
+        eventName: registerFirstCheckId,
+        props: { registerType: 'WeChat', registerStatus: 'success' },
+      });
+      SolarEngine.trackFirstEvent(registerFirstCheckId, {
+        registerType: 'WeChat',
+        registerStatus: 'success',
+        customProperties: withCallId({}, callId),
+      });
+      logCall('trackFirstEvent', {
+        eventName: customFirstCheckId,
+        props: {
+          eventName: 'Customtest_plain',
+          preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+        },
+      });
+      SolarEngine.trackFirstEvent(customFirstCheckId, {
+        eventName: 'Customtest_plain',
+        customProperties: {},
+        preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+    },
+    startNormal: () => {
+      logCall('eventStart', { eventName: 'timer_event_plain' });
+      SolarEngine.eventStart('timer_event_plain');
+    },
+    endNormal: () => {
+      const callId = logCall('eventEnd', {
+        eventName: 'timer_event_plain',
+        props: {},
+      });
+      SolarEngine.eventEnd('timer_event_plain', withCallId({}, callId));
+    },
     custom: () => {
       const callId = logCall('trackCustomEvent', {
         eventName: 'test_event',
         props: {},
         preset: { _currency_type: 'USD', _pay_amount: 11 },
+        eventAlias: '自定义事件别名_带预置属性',
       });
       const customProps = withCallId({}, callId);
-      SolarEngine.trackCustomEvent('test_event', customProps, {
-        _currency_type: 'USD',
-        _pay_amount: 11,
+      SolarEngine.trackCustomEvent(
+        'test_event',
+        customProps,
+        {
+          _currency_type: 'USD',
+          _pay_amount: 11,
+        },
+        '自定义事件别名_带预置属性'
+      ); // eventAlias
+    },
+    customWithoutPreProperties: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_no_pre_properties',
+        props: {},
+        eventAlias: '自定义事件别名_无预置属性',
       });
+      SolarEngine.trackCustomEvent(
+        'test_event_no_pre_properties',
+        withCallId({}, callId),
+        undefined,
+        '自定义事件别名_无预置属性'
+      );
     },
     first: () => {
+      const firstEventRunSuffix = `${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+      const registerFirstCheckId = `first_check_1_ios-run-20260714-154946_rn-ios-sim-20260714_rn-ios-dialog-20260714_${firstEventRunSuffix}`;
+      const customFirstCheckId = `first_check_2_ios-run-20260714-154946_rn-ios-sim-20260714_rn-ios-dialog-20260714_${firstEventRunSuffix}`;
       const callId1 = logCall('trackFirstEvent', {
-        eventName: 'first_check_1',
+        eventName: registerFirstCheckId,
         props: {
           registerType: 'WeChat',
           registerStatus: 'success',
           customProperties: { key: 'test' },
         },
       });
-      SolarEngine.trackFirstEvent('first_check_1', {
+      SolarEngine.trackFirstEvent(registerFirstCheckId, {
         registerType: 'WeChat',
         registerStatus: 'success',
         customProperties: withCallId({ key: 'test' }, callId1),
       });
       logCall('trackFirstEvent', {
-        eventName: 'first_check_2',
+        eventName: customFirstCheckId,
         props: {
           eventName: 'Customtest',
           customProperties: { key: 'test' },
           preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+          eventAlias: '首次自定义事件别名',
         },
       });
-      SolarEngine.trackFirstEvent('first_check_2', {
+      SolarEngine.trackFirstEvent(customFirstCheckId, {
         eventName: 'Customtest',
         customProperties: { key: 'test' },
         preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+        eventAlias: '首次自定义事件别名', // eventAlias (Custom type only)
       });
     },
     start: () => {
@@ -553,8 +785,13 @@ export default function App() {
       const callId = logCall('eventEnd', {
         eventName: 'timer_event',
         props: {},
+        eventAlias: '计时事件别名',
       });
-      SolarEngine.eventEnd('timer_event', withCallId({}, callId));
+      SolarEngine.eventEnd(
+        'timer_event',
+        withCallId({}, callId),
+        '计时事件别名'
+      ); // eventAlias
     },
     reportNow: () => {
       logCall('reportEventimmediately');
@@ -780,17 +1017,23 @@ export default function App() {
     setOAID: () => {
       const callId = logCall('setOaid', { oaid: 'oaid_123' });
       SolarEngine.setOaid('oaid_123');
-      trackVerifyEvent('rn_verify_set_oaid', callId);
+      if (Platform.OS === 'android') {
+        trackVerifyEvent('rn_verify_set_oaid', callId);
+      }
     },
     setGAID: () => {
       const callId = logCall('setGaid', { gaid: 'gaid_123' });
       SolarEngine.setGaid('gaid_123');
-      trackVerifyEvent('rn_verify_set_gaid', callId);
+      if (Platform.OS === 'android') {
+        trackVerifyEvent('rn_verify_set_gaid', callId);
+      }
     },
     setChannel: () => {
       const callId = logCall('setChannel', { channel: 'channel_123' });
       SolarEngine.setChannel('channel_123');
-      trackVerifyEvent('rn_verify_set_channel', callId);
+      if (Platform.OS === 'android') {
+        trackVerifyEvent('rn_verify_set_channel', callId);
+      }
     },
   };
 
@@ -832,28 +1075,50 @@ export default function App() {
       _userPropActions: userPropActions,
     } = autoRunActionsRef.current;
 
-    let cancelled = false;
+    const autoRunState = getIosAutoRunState();
+    if (autoRunState.started) {
+      log('[IOS CASE] auto-run already started, skip duplicate effect');
+      return;
+    }
+    autoRunState.started = true;
 
     const runStep = async (
       name: string,
       action: () => void | Promise<void>
     ) => {
-      if (cancelled) {
-        return;
-      }
-      log(`[ANDROID CASE] start ${name}`);
+      log(`[IOS CASE] start ${name}`);
       try {
         await action();
-        log(`[ANDROID CASE] done ${name}`);
+        log(`[IOS CASE] done ${name}`);
       } catch (error) {
-        log(`[ANDROID CASE] failed ${name}: ${safeStringify(error)}`);
+        log(`[IOS CASE] failed ${name}: ${safeStringify(error)}`);
       }
       await delay(1200);
     };
 
+    const runReportingStep = async (
+      name: string,
+      action: () => void | Promise<void>
+    ) => {
+      await runStep(name, action);
+      eventActions.reportNow();
+      await delay(3000);
+    };
+
     const runCases = async () => {
       await delay(1500);
-      log('[ANDROID CASE] auto-run begin');
+      if (IOS_AUTO_RUN_ALL_FALSE_ONLY) {
+        log('[IOS CASE] all-false auto-run begin');
+        await runStep('preInitAllFalseConfig', () => _preInit());
+        await runStep('initializeAllFalseConfig', async () => {
+          await _initialize(false);
+        });
+        await delay(5000);
+        log('[IOS CASE] all-false auto-run complete');
+        autoRunState.completed = true;
+        return;
+      }
+      log('[IOS CASE] auto-run begin');
       await runStep('preInit', () => _preInit());
       await runStep('initialize', async () => {
         await _initialize();
@@ -869,31 +1134,51 @@ export default function App() {
         userActions.fetchAccount()
       );
       await runStep('setGDPRArea', () => userActions.setGDPR());
-      await runStep('setSuperProperties', () => propertyActions.setSuper());
-      await runStep('unsetSuperProperty', () => propertyActions.unsetSuper());
-      await runStep('clearSuperProperties', () => propertyActions.clearSuper());
-      await runStep('getPresetProperties', () => propertyActions.getPreset());
-      await runStep('setPresetEventProperties', () =>
-        propertyActions.setPresetEvent()
+      await runReportingStep('setSuperProperties', () =>
+        propertyActions.setSuper()
       );
-      await runStep('trackCustomEvent', () => eventActions.custom());
-      await runStep('trackFirstEvent', () => eventActions.first());
+      await runReportingStep('unsetSuperProperty', () =>
+        propertyActions.unsetSuper()
+      );
+      await runReportingStep('clearSuperProperties', () =>
+        propertyActions.clearSuper()
+      );
+      await runStep('getPresetProperties', () => propertyActions.getPreset());
+      await runReportingStep('trackCustomEvent', () => eventActions.custom());
+      await runReportingStep('trackCustomEventWithoutPreProperties', () =>
+        eventActions.customWithoutPreProperties()
+      );
+      await runReportingStep('trackFirstEvent', () => eventActions.first());
       await runStep('eventStart', () => eventActions.start());
       await delay(1800);
-      await runStep('eventEnd', () => eventActions.end());
-      await runStep('trackAdImpression', () => specificActions.adImp());
-      await runStep('trackAdClick', () => specificActions.adClick());
-      await runStep('trackIAP', () => specificActions.iap());
-      await runStep('trackAppAttr', () => specificActions.appAttr());
-      await runStep('trackOrder', () => specificActions.order());
-      await runStep('trackRegister', () => specificActions.register());
-      await runStep('trackLogin', () => specificActions.login());
-      await runStep('userInit', () => userPropActions.init());
-      await runStep('userUpdate', () => userPropActions.update());
-      await runStep('userAdd', () => userPropActions.add());
-      await runStep('userUnset', () => userPropActions.unset());
-      await runStep('userAppend', () => userPropActions.append());
-      await runStep('userDelete', () => userPropActions.delete());
+      await runReportingStep('eventEnd', () => eventActions.end());
+      await runReportingStep('trackCustomEventPlain', () =>
+        eventActions.customNormal()
+      );
+      await runReportingStep('trackCustomEventWithoutPrePropertiesPlain', () =>
+        eventActions.customWithoutPrePropertiesNormal()
+      );
+      await runReportingStep('trackFirstEventPlain', () =>
+        eventActions.firstNormal()
+      );
+      await runStep('eventStartPlain', () => eventActions.startNormal());
+      await delay(1800);
+      await runReportingStep('eventEndPlain', () => eventActions.endNormal());
+      await runReportingStep('trackAdImpression', () =>
+        specificActions.adImp()
+      );
+      await runReportingStep('trackAdClick', () => specificActions.adClick());
+      await runReportingStep('trackIAP', () => specificActions.iap());
+      await runReportingStep('trackAppAttr', () => specificActions.appAttr());
+      await runReportingStep('trackOrder', () => specificActions.order());
+      await runReportingStep('trackRegister', () => specificActions.register());
+      await runReportingStep('trackLogin', () => specificActions.login());
+      await runReportingStep('userInit', () => userPropActions.init());
+      await runReportingStep('userUpdate', () => userPropActions.update());
+      await runReportingStep('userAdd', () => userPropActions.add());
+      await runReportingStep('userUnset', () => userPropActions.unset());
+      await runReportingStep('userAppend', () => userPropActions.append());
+      await runReportingStep('userDelete', () => userPropActions.delete());
       await runStep('getAttribution', () => attrActions.retrieveAttr());
       await runStep('setDefaultConfig', () => remoteConfigActions.setDefault());
       await runStep('setRemoteConfigEventProperties', () =>
@@ -902,14 +1187,15 @@ export default function App() {
       await runStep('setRemoteConfigUserProperties', () =>
         remoteConfigActions.setUserProps()
       );
+      await runStep('asyncFetchRemoteConfig', () =>
+        remoteConfigActions.asyncFetch()
+      );
+      await delay(3000);
       await runStep('fastFetchRemoteConfig', () =>
         remoteConfigActions.fastFetch()
       );
       await runStep('fastFetchRemoteConfigWithKey', () =>
         remoteConfigActions.fastFetchKey()
-      );
-      await runStep('asyncFetchRemoteConfig', () =>
-        remoteConfigActions.asyncFetch()
       );
       await runStep('asyncFetchRemoteConfigWithKey', () =>
         remoteConfigActions.asyncFetchKey()
@@ -920,21 +1206,24 @@ export default function App() {
       await runStep('updatePostbackConversionValue', () =>
         platformActions.iosSKAN()
       );
-      await runStep('iOSUnsupportedSetOaid', () => platformActions.setOAID());
-      await runStep('iOSUnsupportedSetGaid', () => platformActions.setGAID());
-      await runStep('iOSUnsupportedSetChannel', () =>
+      await runReportingStep('iOSUnsupportedSetOaid', () =>
+        platformActions.setOAID()
+      );
+      await runReportingStep('iOSUnsupportedSetGaid', () =>
+        platformActions.setGAID()
+      );
+      await runReportingStep('iOSUnsupportedSetChannel', () =>
         platformActions.setChannel()
       );
       await runStep('reportEventimmediately', () => eventActions.reportNow());
       await delay(5000);
-      log('[ANDROID CASE] auto-run complete');
+      log('[IOS CASE] auto-run complete');
+      autoRunState.completed = true;
     };
 
-    runCases();
-
-    return () => {
-      cancelled = true;
-    };
+    runCases().catch((error) => {
+      log(`[IOS CASE] auto-run failed: ${safeStringify(error)}`);
+    });
   }, []);
 
   return (
@@ -972,7 +1261,18 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Section title="初始化">
           <DemoButton title="Pre-Init1111" onPress={_preInit} />
-          <DemoButton title="Initialize" onPress={_initialize} />
+          {INITIALIZE_CASES.map((initializeCase) => (
+            <DemoButton
+              key={initializeCase.name}
+              title={initializeCase.title}
+              onPress={() => _initialize(initializeCase.enabled)}
+            />
+          ))}
+          <DemoButton
+            title="Initialize (log only)"
+            color="#FF9800"
+            onPress={_initializeMinimal}
+          />
         </Section>
 
         <Section title="用户操作">
@@ -1043,11 +1343,46 @@ export default function App() {
         </Section>
 
         <Section title="事件埋点">
-          <DemoButton title="Custom Event" onPress={_eventActions.custom} />
-          <DemoButton title="First Event" onPress={_eventActions.first} />
-          <DemoButton title="Event Start" onPress={_eventActions.start} />
-          <DemoButton title="Event End" onPress={_eventActions.end} />
+          <DemoButton
+            title="Custom Event"
+            onPress={_eventActions.customNormal}
+          />
+          <DemoButton
+            title="Custom Event No PreProperties"
+            onPress={_eventActions.customWithoutPrePropertiesNormal}
+          />
+          <DemoButton title="First Event" onPress={_eventActions.firstNormal} />
+          <DemoButton title="Event Start" onPress={_eventActions.startNormal} />
+          <DemoButton title="Event End" onPress={_eventActions.endNormal} />
           <DemoButton title="Report Now" onPress={_eventActions.reportNow} />
+        </Section>
+
+        <Section title="事件别名 eventAlias (1.3.2)">
+          <DemoButton
+            title="Custom Event + PreProperties + alias"
+            onPress={_eventActions.custom}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Custom Event No PreProperties + alias"
+            onPress={_eventActions.customWithoutPreProperties}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="First Event(Custom) + alias"
+            onPress={_eventActions.first}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Event Start"
+            onPress={_eventActions.start}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Event End + alias"
+            onPress={_eventActions.end}
+            color="#4CAF50"
+          />
         </Section>
 
         <Section title="业务事件">

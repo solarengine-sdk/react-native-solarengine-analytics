@@ -96,6 +96,11 @@ const DEFAULT_RC_KEYS = [
 
 const IOS_AUTO_RUN_CASES = false;
 
+const INITIALIZE_CASES = [
+  { name: 'allEnabled', title: 'Initialize (all enabled)', enabled: true },
+  { name: 'allDisabled', title: 'Initialize (all disabled)', enabled: false },
+] as const;
+
 const delay = (ms: number) =>
   new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -109,29 +114,58 @@ const withCallId = (
 };
 
 const PRESET_EVENT_PROPERTIES = { PresetEvent: 'test' };
-const PRESET_EVENT_TYPES =
-  PresetEventType.INSTALL | PresetEventType.START | PresetEventType.END;
+const PRESET_EVENT_TYPES = PresetEventType.INSTALL | PresetEventType.START;
+const PRESET_EVENT_CASES = [
+  { name: 'INSTALL', value: PresetEventType.INSTALL },
+  { name: 'START', value: PresetEventType.START },
+  { name: 'COMBINED_INSTALL_START', value: PRESET_EVENT_TYPES },
+  { name: 'END', value: PresetEventType.END },
+] as const;
 
 const trackVerifyEvent = (eventName: string, callId: number) => {
-  SolarEngine.trackCustomEvent(eventName, withCallId({}, callId), {
-    _currency_type: 'USD',
-    _pay_amount: 1,
-  });
+  SolarEngine.trackCustomEvent(
+    eventName,
+    withCallId({}, callId),
+    {
+      _currency_type: 'USD',
+      _pay_amount: 1,
+    },
+    '验证事件别名'
+  );
 };
 
-function buildInitialConfig(): se_initial_config {
+function buildInitialConfigSwitches(enabled: boolean) {
   return {
-    enableLog: true,
-    enableDebug: true,
-    enable2G: true,
-    enableGDPR: true,
+    enable2G: enabled,
+    enableAnalytics: enabled,
+    enableAttribution: enabled,
+    enableCoppa: enabled,
+    enableDebug: enabled,
+    enableDeferredDeeplink: enabled,
+    enableDensity: enabled,
+    enableGDPR: enabled,
+    enableIPV6: enabled,
+    enableKidsApp: enabled,
+    enableLanguage: enabled,
+    enableLocale: enabled,
+    enableNetworkType: enabled,
+    enableOAID: enabled,
+    enableODID: enabled,
+    enableAAID: enabled,
+    enableScreenWH: enabled,
+    enableTimeZone: enabled,
+    enableUA: enabled,
+    enableUserData: enabled,
+  };
+}
 
-    enableUserData: true,
-    enableCoppa: true,
-    enableKidsApp: true,
-    enableDeferredDeeplink: true,
+function buildInitialConfig(enabled = true): se_initial_config {
+  return {
+    ...buildInitialConfigSwitches(enabled),
+    enableLog: true,
+
     android: {
-      enablePersonalizedAd: true,
+      enablePersonalizedAd: enabled,
     },
     ios: {
       attAuthorizationWaitingInterval: 60,
@@ -246,12 +280,17 @@ export default function App() {
       });
       SolarEngine.setInternalLogEnabled(true);
     }
-    const appKey = Platform.OS === 'android' ? AndroidAppKey : HMAppKey;
+    const appKey =
+      Platform.OS === 'ios'
+        ? iOSAppKey
+        : Platform.OS === 'android'
+          ? AndroidAppKey
+          : HMAppKey;
     logCall('preInit', { appKey });
     SolarEngine.preInit(appKey);
   };
 
-  const _initialize = (): Promise<InitiateCompletionInfo> => {
+  const _initialize = (enabled = true): Promise<InitiateCompletionInfo> => {
     let appKey = '';
     if (Platform.OS === 'ios') {
       appKey = iOSAppKey;
@@ -261,8 +300,15 @@ export default function App() {
       appKey = HMAppKey;
     }
     log('initialize platform: ' + Platform.OS);
-    logCall('initialize', { platform: Platform.OS, appKey });
-    logCall('setPreSetEventWithProperties.beforeInitialize', {
+    const initializeCase = enabled ? INITIALIZE_CASES[0] : INITIALIZE_CASES[1];
+    logCall('initialize', {
+      platform: Platform.OS,
+      appKey,
+      case: initializeCase.name,
+    });
+    const config = buildInitialConfig(enabled);
+    logCall('initialize.config', buildInitialConfigSwitches(enabled));
+    logCall('setPresetEventProperties', {
       eventType: PRESET_EVENT_TYPES,
       props: PRESET_EVENT_PROPERTIES,
     });
@@ -272,7 +318,7 @@ export default function App() {
     );
 
     const options: SolarEngineInitiateOptions = {
-      config: buildInitialConfig(),
+      config,
       remoteConfig: buildRemoteConfig(),
       attribution: handleAttribution,
       deeplink: handleDeepLink,
@@ -484,57 +530,147 @@ export default function App() {
         });
       }
     },
-    setPresetEvent: () => {
-      logCall('setPreSetEventWithProperties', {
-        eventType: PRESET_EVENT_TYPES,
+    setPresetEvent: (
+      eventType: PresetEventType = PRESET_EVENT_TYPES,
+      eventTypeName = 'COMBINED_INSTALL_START'
+    ) => {
+      logCall('setPresetEventProperties', {
+        eventType,
+        eventTypeName,
         props: PRESET_EVENT_PROPERTIES,
       });
       SolarEngine.setPreSetEventWithProperties(
-        PRESET_EVENT_TYPES,
+        eventType,
         PRESET_EVENT_PROPERTIES
       );
     },
   };
 
   const _eventActions = {
+    customNormal: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_plain',
+        props: {},
+        preset: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+      SolarEngine.trackCustomEvent('test_event_plain', withCallId({}, callId), {
+        _currency_type: 'USD',
+        _pay_amount: 11,
+      });
+    },
+    customWithoutPrePropertiesNormal: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_no_pre_properties_plain',
+        props: {},
+      });
+      SolarEngine.trackCustomEvent(
+        'test_event_no_pre_properties_plain',
+        withCallId({}, callId)
+      );
+    },
+    firstNormal: () => {
+      const firstEventRunSuffix = `${Date.now()}_${Math.random()
+        .toString(16)
+        .slice(2, 8)}`;
+      const registerFirstCheckId = `first_check_plain_1_${firstEventRunSuffix}`;
+      const customFirstCheckId = `first_check_plain_2_${firstEventRunSuffix}`;
+      const callId = logCall('trackFirstEvent', {
+        eventName: registerFirstCheckId,
+        props: { registerType: 'WeChat', registerStatus: 'success' },
+      });
+      SolarEngine.trackFirstEvent(registerFirstCheckId, {
+        registerType: 'WeChat',
+        registerStatus: 'success',
+        customProperties: withCallId({}, callId),
+      });
+      logCall('trackFirstEvent', {
+        eventName: customFirstCheckId,
+        props: {
+          eventName: 'Customtest_plain',
+          preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+        },
+      });
+      SolarEngine.trackFirstEvent(customFirstCheckId, {
+        eventName: 'Customtest_plain',
+        customProperties: {},
+        preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+      });
+    },
+    startNormal: () => {
+      logCall('eventStart', { eventName: 'timer_event_plain' });
+      SolarEngine.eventStart('timer_event_plain');
+    },
+    endNormal: () => {
+      const callId = logCall('eventEnd', {
+        eventName: 'timer_event_plain',
+        props: {},
+      });
+      SolarEngine.eventEnd('timer_event_plain', withCallId({}, callId));
+    },
     custom: () => {
       const callId = logCall('trackCustomEvent', {
         eventName: 'test_event',
         props: {},
         preset: { _currency_type: 'USD', _pay_amount: 11 },
+        eventAlias: '自定义事件别名_带预置属性',
       });
       const customProps = withCallId({}, callId);
-      SolarEngine.trackCustomEvent('test_event', customProps, {
-        _currency_type: 'USD',
-        _pay_amount: 11,
+      SolarEngine.trackCustomEvent(
+        'test_event',
+        customProps,
+        {
+          _currency_type: 'USD',
+          _pay_amount: 11,
+        },
+        '自定义事件别名_带预置属性'
+      );
+    },
+    customWithoutPreProperties: () => {
+      const callId = logCall('trackCustomEvent', {
+        eventName: 'test_event_no_pre_properties',
+        props: {},
+        eventAlias: '自定义事件别名_无预置属性',
       });
+      SolarEngine.trackCustomEvent(
+        'test_event_no_pre_properties',
+        withCallId({}, callId),
+        undefined,
+        '自定义事件别名_无预置属性'
+      );
     },
     first: () => {
+      const firstEventRunSuffix = `${Date.now()}_${Math.random()
+        .toString(16)
+        .slice(2, 8)}`;
+      const registerFirstCheckId = `first_check_1_${firstEventRunSuffix}`;
+      const customFirstCheckId = `first_check_2_${firstEventRunSuffix}`;
       const callId1 = logCall('trackFirstEvent', {
-        eventName: 'first_check_1',
+        eventName: registerFirstCheckId,
         props: {
           registerType: 'WeChat',
           registerStatus: 'success',
           customProperties: { key: 'test' },
         },
       });
-      SolarEngine.trackFirstEvent('first_check_1', {
+      SolarEngine.trackFirstEvent(registerFirstCheckId, {
         registerType: 'WeChat',
         registerStatus: 'success',
         customProperties: withCallId({ key: 'test' }, callId1),
       });
       logCall('trackFirstEvent', {
-        eventName: 'first_check_2',
+        eventName: customFirstCheckId,
         props: {
           eventName: 'Customtest',
           customProperties: { key: 'test' },
           preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+          eventAlias: '首次自定义事件别名',
         },
       });
-      SolarEngine.trackFirstEvent('first_check_2', {
+      SolarEngine.trackFirstEvent(customFirstCheckId, {
         eventName: 'Customtest',
         customProperties: { key: 'test' },
         preProperties: { _currency_type: 'USD', _pay_amount: 11 },
+        eventAlias: '首次自定义事件别名',
       });
     },
     start: () => {
@@ -545,8 +681,13 @@ export default function App() {
       const callId = logCall('eventEnd', {
         eventName: 'timer_event',
         props: {},
+        eventAlias: '计时事件别名',
       });
-      SolarEngine.eventEnd('timer_event', withCallId({}, callId));
+      SolarEngine.eventEnd(
+        'timer_event',
+        withCallId({}, callId),
+        '计时事件别名'
+      );
     },
     reportNow: () => {
       logCall('reportEventimmediately');
@@ -874,7 +1015,15 @@ export default function App() {
       await runStep('setPresetEventProperties', () =>
         propertyActions.setPresetEvent()
       );
+      for (const presetCase of PRESET_EVENT_CASES) {
+        await runStep(`setPresetEventProperties.${presetCase.name}`, () =>
+          propertyActions.setPresetEvent(presetCase.value, presetCase.name)
+        );
+      }
       await runStep('trackCustomEvent', () => eventActions.custom());
+      await runStep('trackCustomEventWithoutPreProperties', () =>
+        eventActions.customWithoutPreProperties()
+      );
       await runStep('trackFirstEvent', () => eventActions.first());
       await runStep('eventStart', () => eventActions.start());
       await delay(1800);
@@ -954,7 +1103,13 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Section title="初始化">
           <DemoButton title="Pre-Init1111" onPress={_preInit} />
-          <DemoButton title="Initialize" onPress={_initialize} />
+          {INITIALIZE_CASES.map((initializeCase) => (
+            <DemoButton
+              key={initializeCase.name}
+              title={initializeCase.title}
+              onPress={() => _initialize(initializeCase.enabled)}
+            />
+          ))}
         </Section>
 
         <Section title="用户操作">
@@ -1025,11 +1180,46 @@ export default function App() {
         </Section>
 
         <Section title="事件埋点">
-          <DemoButton title="Custom Event" onPress={_eventActions.custom} />
-          <DemoButton title="First Event" onPress={_eventActions.first} />
-          <DemoButton title="Event Start" onPress={_eventActions.start} />
-          <DemoButton title="Event End" onPress={_eventActions.end} />
+          <DemoButton
+            title="Custom Event"
+            onPress={_eventActions.customNormal}
+          />
+          <DemoButton
+            title="Custom Event No PreProperties"
+            onPress={_eventActions.customWithoutPrePropertiesNormal}
+          />
+          <DemoButton title="First Event" onPress={_eventActions.firstNormal} />
+          <DemoButton title="Event Start" onPress={_eventActions.startNormal} />
+          <DemoButton title="Event End" onPress={_eventActions.endNormal} />
           <DemoButton title="Report Now" onPress={_eventActions.reportNow} />
+        </Section>
+
+        <Section title="事件别名 eventAlias (1.3.2)">
+          <DemoButton
+            title="Custom Event + PreProperties + alias"
+            onPress={_eventActions.custom}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Custom Event No PreProperties + alias"
+            onPress={_eventActions.customWithoutPreProperties}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="First Event(Custom) + alias"
+            onPress={_eventActions.first}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Event Start"
+            onPress={_eventActions.start}
+            color="#4CAF50"
+          />
+          <DemoButton
+            title="Event End + alias"
+            onPress={_eventActions.end}
+            color="#4CAF50"
+          />
         </Section>
 
         <Section title="业务事件">

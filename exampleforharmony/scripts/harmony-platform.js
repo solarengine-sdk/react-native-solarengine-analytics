@@ -17,6 +17,9 @@ const harmonyMetroConfigPath = path.join(
   'HarmonyMetroConfig.ets'
 );
 const DEFAULT_METRO_PORT = 8081;
+const DEFAULT_HARMONY_IDE_PATH = '/Applications/DevEco-Studio.app';
+const DEFAULT_HDC_PATH =
+  '/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc';
 const action = process.argv[2];
 const actionArgs = process.argv.slice(3);
 
@@ -189,6 +192,8 @@ function runHarmonyMetro() {
 
   if (isPortInUse(port)) {
     if (isMetroResponding(port) && isHarmonyMetro(port)) {
+      setHarmonyMetroHost(port);
+      setupHdcReversePort(port);
       console.log(
         `[hm] Harmony Metro already responding on port ${port}; reusing existing server.`
       );
@@ -203,6 +208,7 @@ function runHarmonyMetro() {
   }
 
   setHarmonyMetroHost(port);
+  setupHdcReversePort(port);
   runCommand(
     'react-native',
     ['start', '--config', 'metro.config.js', '--port', String(port)],
@@ -210,6 +216,32 @@ function runHarmonyMetro() {
       cwd: exampleDir,
     }
   );
+}
+
+function setupHdcReversePort(port) {
+  const hdcPath = (process.env.HDC_PATH || DEFAULT_HDC_PATH).trim();
+  if (!fs.existsSync(hdcPath)) {
+    fail(
+      `hdc was not found at ${hdcPath}. Set HDC_PATH to your DevEco hdc executable.`
+    );
+  }
+
+  runCommand(hdcPath, ['rport', `tcp:${port}`, `tcp:${port}`]);
+  console.log(`[harmony-hdc] rport tcp:${port} tcp:${port}`);
+}
+
+function openHarmonyProject() {
+  const idePath = (
+    process.env.HARMONY_IDE_PATH || DEFAULT_HARMONY_IDE_PATH
+  ).trim();
+  if (!fs.existsSync(idePath)) {
+    fail(
+      `DevEco Studio was not found at ${idePath}. Set HARMONY_IDE_PATH to your DevEco Studio.app path.`
+    );
+  }
+
+  runCommand('open', ['-a', idePath, harmonySampleDir]);
+  console.log(`[harmony-ide] opened ${harmonySampleDir}`);
 }
 
 function main() {
@@ -237,6 +269,12 @@ function main() {
     if (action === 'run') {
       setHarmonyMetroHost();
       runCommand('yarn', ['bundle:harmony'], { cwd: exampleDir });
+      const port = Number.parseInt(
+        process.env.RCT_METRO_PORT || String(DEFAULT_METRO_PORT),
+        10
+      );
+      setupHdcReversePort(Number.isFinite(port) ? port : DEFAULT_METRO_PORT);
+      openHarmonyProject();
       runHarmonyMetro();
       return;
     }

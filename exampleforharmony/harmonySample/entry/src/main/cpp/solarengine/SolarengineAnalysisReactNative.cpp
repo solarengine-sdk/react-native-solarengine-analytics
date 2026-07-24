@@ -47,9 +47,9 @@ SolarengineAnalysisReactNative::SolarengineAnalysisReactNative(const ArkTSTurboM
         ARK_METHOD_METADATA(trackRegisterWithAttributes, 1),
         ARK_METHOD_METADATA(trackLoginWithAttributes, 1),
 
-        ARK_METHOD_METADATA(trackCustomEvent, 3),
+        ARK_METHOD_METADATA(trackCustomEvent, 4),
         ARK_METHOD_METADATA(eventStart, 1),
-        ARK_METHOD_METADATA(eventEnd, 2),
+        ARK_METHOD_METADATA(eventEnd, 3),
         ARK_METHOD_METADATA(trackFirstEvent, 2),
         ARK_METHOD_METADATA(reportEventimmediately, 0),
         ARK_METHOD_METADATA(trackAppReEngagement, 1),

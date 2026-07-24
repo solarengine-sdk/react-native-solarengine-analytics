@@ -11444,29 +11444,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solarengine-analysis-react-native-example@workspace:example":
+"solarengine-analysis-react-native-cn@workspace:.":
   version: 0.0.0-use.local
-  resolution: "solarengine-analysis-react-native-example@workspace:example"
-  dependencies:
-    "@babel/core": ^7.25.2
-    "@babel/preset-env": ^7.25.3
-    "@babel/runtime": ^7.25.0
-    "@react-native-community/cli": 18.0.0
-    "@react-native-community/cli-platform-android": 18.0.0
-    "@react-native-community/cli-platform-ios": 18.0.0
-    "@react-native/babel-preset": 0.79.2
-    "@react-native/metro-config": 0.79.2
-    "@react-native/typescript-config": 0.79.2
-    "@types/react": ^19.0.0
-    react: 19.0.0
-    react-native: 0.79.2
-    react-native-builder-bob: ^0.40.10
-  languageName: unknown
-  linkType: soft
-
-"solarengine-analysis-react-native@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "solarengine-analysis-react-native@workspace:."
+  resolution: "solarengine-analysis-react-native-cn@workspace:."
   dependencies:
     "@commitlint/config-conventional": ^19.6.0
     "@eslint/compat": ^1.2.7
@@ -11493,6 +11473,26 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
+  languageName: unknown
+  linkType: soft
+
+"solarengine-analysis-react-native-example@workspace:example":
+  version: 0.0.0-use.local
+  resolution: "solarengine-analysis-react-native-example@workspace:example"
+  dependencies:
+    "@babel/core": ^7.25.2
+    "@babel/preset-env": ^7.25.3
+    "@babel/runtime": ^7.25.0
+    "@react-native-community/cli": 18.0.0
+    "@react-native-community/cli-platform-android": 18.0.0
+    "@react-native-community/cli-platform-ios": 18.0.0
+    "@react-native/babel-preset": 0.79.2
+    "@react-native/metro-config": 0.79.2
+    "@react-native/typescript-config": 0.79.2
+    "@types/react": ^19.0.0
+    react: 19.0.0
+    react-native: 0.79.2
+    react-native-builder-bob: ^0.40.10
   languageName: unknown
   linkType: soft
 
