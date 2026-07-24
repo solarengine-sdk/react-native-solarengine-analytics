@@ -86,3 +86,4 @@ example/android/app/src/main/assets/
 # Watchman
 .watchman-cookie-*
 .watchmanconfig
+.worktrees/
