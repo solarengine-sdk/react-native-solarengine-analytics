@@ -279,9 +279,7 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
     enableKidsApp = [config[@"enableKidsApp"] boolValue];
     seconfig.setKidsAppEnabled = enableKidsApp;
   }
-  if (iosConfigs[@"enableODMInfo"] != nil) {
-    seconfig.enableODMInfo = [iosConfigs[@"enableODMInfo"] boolValue];
-  }
+
 #endif
   
   BOOL enableDeferredDeeplink = NO;
