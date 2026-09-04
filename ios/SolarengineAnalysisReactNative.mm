@@ -292,6 +292,9 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
   if (config[@"enableAttribution"] != nil) {
     seconfig.enableAttribution = [config[@"enableAttribution"] boolValue];
   }
+  if (config[@"enableSeparatedAttribution"] != nil) {
+    seconfig.enableSeparatedAttribution = [config[@"enableSeparatedAttribution"] boolValue];
+  }
   if (config[@"enableAnalytics"] != nil) {
     seconfig.enableAnalytics = [config[@"enableAnalytics"] boolValue];
   }
@@ -398,6 +401,49 @@ RCT_EXPORT_METHOD(registerInitiateComplete:(RCTResponseSenderBlock)callback) {
 #else
 RCT_EXPORT_METHOD(registerAttribution:(RCTResponseSenderBlock)callback) {
   [self _registerAttribution:callback];
+}
+#endif
+
+// MARK: - separated attribution
+- (void)_setUAAttributionListener:(RCTResponseSenderBlock)callback {
+  [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
+  if (callback == nil) {
+    return;
+  }
+
+  [[SolarEngineSDK sharedInstance] setUAAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
+    callback(@[@(code), attributionData ?: [NSNull null]]);
+  }];
+}
+
+#ifdef RCT_NEW_ARCH_ENABLED
+- (void)setUAAttributionListener:(RCTResponseSenderBlock)callback {
+  [self _setUAAttributionListener:callback];
+}
+#else
+RCT_EXPORT_METHOD(setUAAttributionListener:(RCTResponseSenderBlock)callback) {
+  [self _setUAAttributionListener:callback];
+}
+#endif
+
+- (void)_setREAttributionListener:(RCTResponseSenderBlock)callback {
+  [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
+  if (callback == nil) {
+    return;
+  }
+
+  [[SolarEngineSDK sharedInstance] setREAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
+    callback(@[@(code), attributionData ?: [NSNull null]]);
+  }];
+}
+
+#ifdef RCT_NEW_ARCH_ENABLED
+- (void)setREAttributionListener:(RCTResponseSenderBlock)callback {
+  [self _setREAttributionListener:callback];
+}
+#else
+RCT_EXPORT_METHOD(setREAttributionListener:(RCTResponseSenderBlock)callback) {
+  [self _setREAttributionListener:callback];
 }
 #endif
 
@@ -1092,6 +1138,32 @@ RCT_EXPORT_METHOD(updatePostbackConversionValue:(double)type conversionValue:(do
 #else
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(retrieveAttribution){
   return [self _retrieveAttribution];
+}
+#endif
+
+- (NSDictionary *)_getUAAttributionData {
+  return [[SolarEngineSDK sharedInstance] getUAAttributionData];
+}
+#ifdef RCT_NEW_ARCH_ENABLED
+- (NSDictionary *)getUAAttributionData {
+  return [self _getUAAttributionData];
+}
+#else
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getUAAttributionData) {
+  return [self _getUAAttributionData];
+}
+#endif
+
+- (NSDictionary *)_getREAttributionData {
+  return [[SolarEngineSDK sharedInstance] getREAttributionData];
+}
+#ifdef RCT_NEW_ARCH_ENABLED
+- (NSDictionary *)getREAttributionData {
+  return [self _getREAttributionData];
+}
+#else
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getREAttributionData) {
+  return [self _getREAttributionData];
 }
 #endif
 
