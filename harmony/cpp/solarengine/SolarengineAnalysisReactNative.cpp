@@ -13,12 +13,16 @@ SolarengineAnalysisReactNative::SolarengineAnalysisReactNative(const ArkTSTurboM
         ARK_METHOD_METADATA(multiply, 2),
 
         ARK_METHOD_METADATA(registerAttribution, 1),
+        ARK_METHOD_METADATA(setUAAttributionListener, 1),
+        ARK_METHOD_METADATA(setREAttributionListener, 1),
         ARK_METHOD_METADATA(registerDeeplink, 1),
         ARK_METHOD_METADATA(registerDeferredDeeplink, 1),
         ARK_METHOD_METADATA(registerInitiateComplete, 1),
 
         ARK_METHOD_METADATA(fetchDistinctId, 1),
         ARK_METHOD_METADATA(retrieveAttribution, 0),
+        ARK_METHOD_METADATA(getUAAttributionData, 0),
+        ARK_METHOD_METADATA(getREAttributionData, 0),
         ARK_METHOD_METADATA(setVisitorID, 1),
         ARK_METHOD_METADATA(setOaid, 1),
         ARK_METHOD_METADATA(setChannel, 1),
