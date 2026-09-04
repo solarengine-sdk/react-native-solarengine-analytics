@@ -25,6 +25,8 @@ export type se_initial_config = {
   /************** Shared switches (supported by at least two platforms) *****************/
   //Whether to enable attribution service (incl. deeplink / deferred deeplink). Default true.
   enableAttribution?: boolean;
+  //Whether to enable V4 separated UA and RE attribution. Default false.
+  enableSeparatedAttribution?: boolean;
   //Whether to enable analytics service (A/B testing, online params). Default true. If both this and enableAttribution are false, SDK reports nothing.
   enableAnalytics?: boolean;
 
@@ -130,7 +132,10 @@ declare type RemoteConfig = {
 declare type SolarEngineInitiateOptions = {
   config?: se_initial_config;
   remoteConfig?: RemoteConfig;
+  /** @deprecated Use uaAttribution and reAttribution or the listener registration functions instead. */
   attribution?: attribution;
+  uaAttribution?: attribution;
+  reAttribution?: attribution;
   deeplink?: deeplink;
   deferredDeeplink?: deferredDeeplink;
   customDomain?: CustomDomain;

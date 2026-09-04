@@ -170,6 +170,41 @@ function _handleAttribution(attribution: attribution | undefined) {
   });
 }
 
+function _handleSeparatedAttribution(
+  kind: 'UA' | 'RE',
+  callback: attribution | undefined
+) {
+  if (callback === undefined) {
+    return;
+  }
+  if (
+    Platform.OS !== 'ios' &&
+    Platform.OS !== 'android' &&
+    !harmonyPlatform()
+  ) {
+    log(`"set${kind}AttributionListener" is not supported on this platform`);
+    return;
+  }
+
+  const register =
+    kind === 'UA'
+      ? SolarengineAnalysis.setUAAttributionListener
+      : SolarengineAnalysis.setREAttributionListener;
+
+  register((code: number, attributionData?: Object) => {
+    if (code !== 0) {
+      callback(code);
+      return;
+    }
+
+    if (attributionData && typeof attributionData === 'object') {
+      callback(code, attributionData as AttributionInfo);
+    } else {
+      callback(-1);
+    }
+  });
+}
+
 function _handleDeepLink(deeplink: deeplink | undefined) {
   if (deeplink === undefined) {
     return;
@@ -308,6 +343,8 @@ export function initialize(
   _setReactNativeBridgeVersion();
 
   _handleAttribution(options.attribution);
+  _handleSeparatedAttribution('UA', options.uaAttribution);
+  _handleSeparatedAttribution('RE', options.reAttribution);
   _handleDeepLink(options.deeplink);
   _handleDeferredDeeplink(options.deferredDeeplink);
 
@@ -326,6 +363,7 @@ export function initialize(
 }
 
 /************** Attribution *****************/
+/** @deprecated Use getUAAttributionData or getREAttributionData instead. */
 export function retrieveAttribution(): AttributionInfo | null {
   if (Platform.OS === 'ios') {
     let result = SolarengineAnalysis.retrieveAttribution();
@@ -346,6 +384,30 @@ export function retrieveAttribution(): AttributionInfo | null {
     return data;
   }
   return SolarengineAnalysis.retrieveAttribution() as AttributionInfo;
+}
+
+export function getUAAttributionData(): AttributionInfo | null {
+  if (Platform.OS === 'ios' || Platform.OS === 'android' || harmonyPlatform()) {
+    return SolarengineAnalysis.getUAAttributionData() as AttributionInfo | null;
+  }
+  log('"getUAAttributionData" is not supported on this platform');
+  return null;
+}
+
+export function getREAttributionData(): AttributionInfo | null {
+  if (Platform.OS === 'ios' || Platform.OS === 'android' || harmonyPlatform()) {
+    return SolarengineAnalysis.getREAttributionData() as AttributionInfo | null;
+  }
+  log('"getREAttributionData" is not supported on this platform');
+  return null;
+}
+
+export function setUAAttributionListener(callback: attribution): void {
+  _handleSeparatedAttribution('UA', callback);
+}
+
+export function setREAttributionListener(callback: attribution): void {
+  _handleSeparatedAttribution('RE', callback);
 }
 
 /************** DistinctId *****************/
