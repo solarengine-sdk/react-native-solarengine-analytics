@@ -104,6 +104,30 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
 
+  private fun setUAAttributionCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.uaAttribution = callback
+    }
+  }
+
+  private fun getUAAttributionCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) { singleton.uaAttribution }
+  }
+
+  private fun setREAttributionCallback(callback: Callback) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.reAttribution = callback
+    }
+  }
+
+  private fun getREAttributionCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) { singleton.reAttribution }
+  }
+
   private fun takeAttributionCallback(): Callback? {
     val singleton = SolarEngineSingleton.getInstance()
     return synchronized(singleton) {
@@ -196,6 +220,18 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
     log("","registerAttribution")
     setAttributionCallback(attribution)
+  }
+
+  @ReactMethod
+  override fun setUAAttributionListener(callback: Callback) {
+    log("", "setUAAttributionListener")
+    setUAAttributionCallback(callback)
+  }
+
+  @ReactMethod
+  override fun setREAttributionListener(callback: Callback) {
+    log("", "setREAttributionListener")
+    setREAttributionCallback(callback)
   }
   @ReactMethod
   override fun registerDeeplink(deeplink: Callback) {
@@ -462,6 +498,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     if (configMap?.hasKey("enableAttribution") == true) {
       seConfig.enableAttribution(configMap.getBoolean("enableAttribution"))
     }
+    // Core switches (1.3.4+)
+    if (configMap?.hasKey("enableSeparatedAttribution") == true) {
+      seConfig.enableSeparatedAttribution(configMap.getBoolean("enableSeparatedAttribution"))
+    }
     if (configMap?.hasKey("enableAnalytics") == true) {
       seConfig.enableAnalytics(configMap.getBoolean("enableAnalytics"))
     }
@@ -493,6 +533,42 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
     // enableODID / enableAAID are Harmony-only; Android 1.3.2 SolarEngineConfig.Builder has no such methods.
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
+    getUAAttributionCallback()?.let { callback ->
+      solarEngineConfig.setUAAttributionListener(object : OnAttributionListener {
+        override fun onAttributionSuccess(attribution: JSONObject) {
+          log("attribution: $attribution", "onUAAttributionSuccess")
+          try {
+            callback.invoke(0, SolarEngineRNUtils.convertJsonToMap(attribution))
+          } catch (e: Exception) {
+            error("failed to convert UA attribution: ${e.message}", "onUAAttributionSuccess")
+            callback.invoke(-1, null)
+          }
+        }
+
+        override fun onAttributionFail(errorCode: Int) {
+          error("errorCode: $errorCode", "onUAAttributionFail")
+          callback.invoke(errorCode, null)
+        }
+      })
+    }
+    getREAttributionCallback()?.let { callback ->
+      solarEngineConfig.setREAttributionListener(object : OnAttributionListener {
+        override fun onAttributionSuccess(attribution: JSONObject) {
+          log("attribution: $attribution", "onREAttributionSuccess")
+          try {
+            callback.invoke(0, SolarEngineRNUtils.convertJsonToMap(attribution))
+          } catch (e: Exception) {
+            error("failed to convert RE attribution: ${e.message}", "onREAttributionSuccess")
+            callback.invoke(-1, null)
+          }
+        }
+
+        override fun onAttributionFail(errorCode: Int) {
+          error("errorCode: $errorCode", "onREAttributionFail")
+          callback.invoke(errorCode, null)
+        }
+      })
+    }
     solarEngineConfig.setOnAttributionListener(object : OnAttributionListener {
       override fun onAttributionSuccess(attribution: JSONObject) {
         //获取归因结果成功时执行的动作
@@ -566,6 +642,30 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
 
     readableMap.putMap("android_object_wrapper_key", reactnativeData)
     return readableMap
+  }
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  override fun getUAAttributionData(): WritableMap? {
+    return try {
+      val attribution = SolarEngineManager.getInstance().getUAAttributionData()
+      log("attribution: $attribution", "getUAAttributionData")
+      attribution?.let { SolarEngineRNUtils.convertJsonToMap(it) }
+    } catch (e: Exception) {
+      error("failed to get UA attribution: ${e.message}", "getUAAttributionData")
+      null
+    }
+  }
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  override fun getREAttributionData(): WritableMap? {
+    return try {
+      val attribution = SolarEngineManager.getInstance().getREAttributionData()
+      log("attribution: $attribution", "getREAttributionData")
+      attribution?.let { SolarEngineRNUtils.convertJsonToMap(it) }
+    } catch (e: Exception) {
+      error("failed to get RE attribution: ${e.message}", "getREAttributionData")
+      null
+    }
   }
   /************** GDPR *****************/
   @ReactMethod
