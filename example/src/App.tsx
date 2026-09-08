@@ -35,12 +35,10 @@ import {
   Paypal,
 } from 'solarengine-analysis-react-native';
 
-const AndroidAppKey = '82770189c354de18';
-//const iOSAppKey = '455cd0c9843e503e';//海外b012bf6e500c84db
-
-const iOSAppKey = '16e503718a7305f5'; //海外b012bf6e500c84db
-
-const HMAppKey = '16e503718a7305f5';
+// Demo AppKeys from the V4 separated attribution requirements.
+const AndroidAppKey = 'd81f85a878ff54b0'; // CN
+const iOSAppKey = '7b2a992e08ca8800'; // CN (also temporarily used by VG)
+const HMAppKey = '16e503718a7305f5'; // current Harmony test environment
 
 const LOG_PREFIX = '[SeSDK Demo]';
 let logSeq = 0;
@@ -194,6 +192,7 @@ function buildInitialConfigSwitches(enabled: boolean) {
     enable2G: enabled,
     enableAnalytics: enabled,
     enableAttribution: enabled,
+    enableSeparatedAttribution: enabled,
     enableAAID: enabled,
     enableCoppa: enabled,
     enableDebug: enabled,
@@ -259,6 +258,24 @@ const handleAttribution: attribution = (code, attributionInfo) => {
   if (attributionInfo) {
     logKeyValues('Attribution callback', attributionInfo);
   }
+};
+
+const handleUAAttribution: attribution = (code, attributionInfo) => {
+  log(
+    'UA Attribution: code=' +
+      code +
+      ', payload=' +
+      safeStringify(attributionInfo ?? null)
+  );
+};
+
+const handleREAttribution: attribution = (code, attributionInfo) => {
+  log(
+    'RE Attribution: code=' +
+      code +
+      ', payload=' +
+      safeStringify(attributionInfo ?? null)
+  );
 };
 
 const handleDeepLink: deeplink = (code, deepLinkInfo) => {
@@ -393,6 +410,8 @@ export default function App() {
       config,
       remoteConfig: buildRemoteConfig(),
       attribution: handleAttribution,
+      uaAttribution: handleUAAttribution,
+      reAttribution: handleREAttribution,
       deeplink: handleDeepLink,
       deferredDeeplink: handleDeferredDeeplink,
     };
@@ -429,6 +448,8 @@ export default function App() {
       config: buildInitialConfigMinimal(),
       remoteConfig: buildRemoteConfig(),
       attribution: handleAttribution,
+      uaAttribution: handleUAAttribution,
+      reAttribution: handleREAttribution,
       deeplink: handleDeepLink,
       deferredDeeplink: handleDeferredDeeplink,
     };
@@ -986,6 +1007,20 @@ export default function App() {
       const result = SolarEngine.retrieveAttribution();
       log('Attribution: ' + JSON.stringify(result));
     },
+    getUAAttr: () => {
+      logCall('getUAAttributionData');
+      log(
+        'UA Attribution: payload=' +
+          safeStringify(SolarEngine.getUAAttributionData())
+      );
+    },
+    getREAttr: () => {
+      logCall('getREAttributionData');
+      log(
+        'RE Attribution: payload=' +
+          safeStringify(SolarEngine.getREAttributionData())
+      );
+    },
     openUrl: () => {
       const url = 'link://www.example.com/programs?action=showall';
       logCall('appDeeplinkOpenURL', { url });
@@ -1096,15 +1131,6 @@ export default function App() {
       await delay(1200);
     };
 
-    const runReportingStep = async (
-      name: string,
-      action: () => void | Promise<void>
-    ) => {
-      await runStep(name, action);
-      eventActions.reportNow();
-      await delay(3000);
-    };
-
     const runCases = async () => {
       await delay(1500);
       if (IOS_AUTO_RUN_ALL_FALSE_ONLY) {
@@ -1134,51 +1160,39 @@ export default function App() {
         userActions.fetchAccount()
       );
       await runStep('setGDPRArea', () => userActions.setGDPR());
-      await runReportingStep('setSuperProperties', () =>
-        propertyActions.setSuper()
-      );
-      await runReportingStep('unsetSuperProperty', () =>
-        propertyActions.unsetSuper()
-      );
-      await runReportingStep('clearSuperProperties', () =>
-        propertyActions.clearSuper()
-      );
+      await runStep('setSuperProperties', () => propertyActions.setSuper());
+      await runStep('unsetSuperProperty', () => propertyActions.unsetSuper());
+      await runStep('clearSuperProperties', () => propertyActions.clearSuper());
       await runStep('getPresetProperties', () => propertyActions.getPreset());
-      await runReportingStep('trackCustomEvent', () => eventActions.custom());
-      await runReportingStep('trackCustomEventWithoutPreProperties', () =>
+      await runStep('trackCustomEvent', () => eventActions.custom());
+      await runStep('trackCustomEventWithoutPreProperties', () =>
         eventActions.customWithoutPreProperties()
       );
-      await runReportingStep('trackFirstEvent', () => eventActions.first());
+      await runStep('trackFirstEvent', () => eventActions.first());
       await runStep('eventStart', () => eventActions.start());
       await delay(1800);
-      await runReportingStep('eventEnd', () => eventActions.end());
-      await runReportingStep('trackCustomEventPlain', () =>
-        eventActions.customNormal()
-      );
-      await runReportingStep('trackCustomEventWithoutPrePropertiesPlain', () =>
+      await runStep('eventEnd', () => eventActions.end());
+      await runStep('trackCustomEventPlain', () => eventActions.customNormal());
+      await runStep('trackCustomEventWithoutPrePropertiesPlain', () =>
         eventActions.customWithoutPrePropertiesNormal()
       );
-      await runReportingStep('trackFirstEventPlain', () =>
-        eventActions.firstNormal()
-      );
+      await runStep('trackFirstEventPlain', () => eventActions.firstNormal());
       await runStep('eventStartPlain', () => eventActions.startNormal());
       await delay(1800);
-      await runReportingStep('eventEndPlain', () => eventActions.endNormal());
-      await runReportingStep('trackAdImpression', () =>
-        specificActions.adImp()
-      );
-      await runReportingStep('trackAdClick', () => specificActions.adClick());
-      await runReportingStep('trackIAP', () => specificActions.iap());
-      await runReportingStep('trackAppAttr', () => specificActions.appAttr());
-      await runReportingStep('trackOrder', () => specificActions.order());
-      await runReportingStep('trackRegister', () => specificActions.register());
-      await runReportingStep('trackLogin', () => specificActions.login());
-      await runReportingStep('userInit', () => userPropActions.init());
-      await runReportingStep('userUpdate', () => userPropActions.update());
-      await runReportingStep('userAdd', () => userPropActions.add());
-      await runReportingStep('userUnset', () => userPropActions.unset());
-      await runReportingStep('userAppend', () => userPropActions.append());
-      await runReportingStep('userDelete', () => userPropActions.delete());
+      await runStep('eventEndPlain', () => eventActions.endNormal());
+      await runStep('trackAdImpression', () => specificActions.adImp());
+      await runStep('trackAdClick', () => specificActions.adClick());
+      await runStep('trackIAP', () => specificActions.iap());
+      await runStep('trackAppAttr', () => specificActions.appAttr());
+      await runStep('trackOrder', () => specificActions.order());
+      await runStep('trackRegister', () => specificActions.register());
+      await runStep('trackLogin', () => specificActions.login());
+      await runStep('userInit', () => userPropActions.init());
+      await runStep('userUpdate', () => userPropActions.update());
+      await runStep('userAdd', () => userPropActions.add());
+      await runStep('userUnset', () => userPropActions.unset());
+      await runStep('userAppend', () => userPropActions.append());
+      await runStep('userDelete', () => userPropActions.delete());
       await runStep('getAttribution', () => attrActions.retrieveAttr());
       await runStep('setDefaultConfig', () => remoteConfigActions.setDefault());
       await runStep('setRemoteConfigEventProperties', () =>
@@ -1206,13 +1220,9 @@ export default function App() {
       await runStep('updatePostbackConversionValue', () =>
         platformActions.iosSKAN()
       );
-      await runReportingStep('iOSUnsupportedSetOaid', () =>
-        platformActions.setOAID()
-      );
-      await runReportingStep('iOSUnsupportedSetGaid', () =>
-        platformActions.setGAID()
-      );
-      await runReportingStep('iOSUnsupportedSetChannel', () =>
+      await runStep('iOSUnsupportedSetOaid', () => platformActions.setOAID());
+      await runStep('iOSUnsupportedSetGaid', () => platformActions.setGAID());
+      await runStep('iOSUnsupportedSetChannel', () =>
         platformActions.setChannel()
       );
       await runStep('reportEventimmediately', () => eventActions.reportNow());
@@ -1414,6 +1424,14 @@ export default function App() {
             onPress={_attrActions.retrieveAttr}
           />
           <DemoButton title="Open URL" onPress={_attrActions.openUrl} />
+          <DemoButton
+            title="Get UA Attribution"
+            onPress={_attrActions.getUAAttr}
+          />
+          <DemoButton
+            title="Get RE Attribution"
+            onPress={_attrActions.getREAttr}
+          />
         </Section>
 
         <Section title="远程配置">

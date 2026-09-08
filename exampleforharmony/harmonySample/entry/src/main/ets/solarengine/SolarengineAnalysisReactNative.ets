@@ -157,6 +157,48 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
+  setUAAttributionListener(callback: (code: number, attributionData?: Object) => void) {
+    logInfo(`${_SolarEngineLog} setUAAttributionListener`);
+    try {
+      const attributionListener: AttributionListener = {
+        onAttributionSuccess: (attribution: Record<string, Object>) => {
+          logInfo(`${_SolarEngineLog} UA attribution success`);
+          callback?.(0, attribution);
+        },
+        onAttributionFailed: (errorCode: number) => {
+          logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
+          callback?.(errorCode);
+        }
+      };
+      SolarEngineManager.setUAAttributionListener(attributionListener);
+    } catch (error) {
+      console.error(`${_SolarEngineLog} setUAAttributionListener failed:`, error);
+      logError(`${_SolarEngineLog} setUAAttributionListener failed`);
+      callback?.(-1);
+    }
+  }
+
+  setREAttributionListener(callback: (code: number, attributionData?: Object) => void) {
+    logInfo(`${_SolarEngineLog} setREAttributionListener`);
+    try {
+      const attributionListener: AttributionListener = {
+        onAttributionSuccess: (attribution: Record<string, Object>) => {
+          logInfo(`${_SolarEngineLog} RE attribution success`);
+          callback?.(0, attribution);
+        },
+        onAttributionFailed: (errorCode: number) => {
+          logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
+          callback?.(errorCode);
+        }
+      };
+      SolarEngineManager.setREAttributionListener(attributionListener);
+    } catch (error) {
+      console.error(`${_SolarEngineLog} setREAttributionListener failed:`, error);
+      logError(`${_SolarEngineLog} setREAttributionListener failed`);
+      callback?.(-1);
+    }
+  }
+
   registerDeeplink(callback: (result: Object) => void) {
     if (_log) {
       console.log(_SolarEngineLog, "registerDeeplink")
@@ -249,6 +291,28 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
+  getUAAttributionData(): Object | null {
+    logInfo(`${_SolarEngineLog} getUAAttributionData`);
+    try {
+      return SolarEngineManager.getUAAttributionData();
+    } catch (error) {
+      console.error(`${_SolarEngineLog} getUAAttributionData failed:`, error);
+      logError(`${_SolarEngineLog} getUAAttributionData failed`);
+      return null;
+    }
+  }
+
+  getREAttributionData(): Object | null {
+    logInfo(`${_SolarEngineLog} getREAttributionData`);
+    try {
+      return SolarEngineManager.getREAttributionData();
+    } catch (error) {
+      console.error(`${_SolarEngineLog} getREAttributionData failed:`, error);
+      logError(`${_SolarEngineLog} getREAttributionData failed`);
+      return null;
+    }
+  }
+
   initialize(appkey: string, config: object, rcConfig: object, customDomain: object) {
     if (_log) {
       console.log(
@@ -277,6 +341,7 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       solarEngineConfig.enableODID = config[SolarEngineConfigConstant.EnableODID];
       solarEngineConfig.enableAAID = config[SolarEngineConfigConstant.EnableAAID];
       solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution];
+      solarEngineConfig.enableSeparatedAttribution = config[SolarEngineConfigConstant.EnableSeparatedAttribution];
       solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics];
       solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage];
       solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale];
@@ -1141,6 +1206,7 @@ export class SolarEngineConfigConstant {
   public static readonly EnableODID = "enableODID";
   public static readonly EnableAAID = "enableAAID";
   public static readonly EnableAttribution = "enableAttribution";
+  public static readonly EnableSeparatedAttribution = "enableSeparatedAttribution";
   public static readonly EnableAnalytics = "enableAnalytics";
   public static readonly EnableLanguage = "enableLanguage";
   public static readonly EnableLocale = "enableLocale";

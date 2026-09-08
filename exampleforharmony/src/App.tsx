@@ -34,12 +34,10 @@ import {
   Paypal,
 } from 'solarengine-analysis-react-native';
 
-const AndroidAppKey = '82770189c354de18';
-//const iOSAppKey = '07df077973a84ea7';//海外b012bf6e500c84db
-
-const iOSAppKey = '16e503718a7305f5'; //海外b012bf6e500c84db
-
-const HMAppKey = '16e503718a7305f5';
+// Demo AppKeys from the V4 separated attribution requirements.
+const AndroidAppKey = 'd81f85a878ff54b0'; // CN
+const iOSAppKey = '7b2a992e08ca8800'; // CN (also temporarily used by VG)
+const HMAppKey = '16e503718a7305f5'; // current Harmony test environment
 
 const LOG_PREFIX = '[SeSDK Demo]';
 let logSeq = 0;
@@ -139,6 +137,7 @@ function buildInitialConfigSwitches(enabled: boolean) {
     enable2G: enabled,
     enableAnalytics: enabled,
     enableAttribution: enabled,
+    enableSeparatedAttribution: enabled,
     enableCoppa: enabled,
     enableDebug: enabled,
     enableDeferredDeeplink: enabled,
@@ -193,6 +192,24 @@ const handleAttribution: attribution = (code, attributionInfo) => {
   if (attributionInfo) {
     logKeyValues('Attribution callback', attributionInfo);
   }
+};
+
+const handleUAAttribution: attribution = (code, attributionInfo) => {
+  log(
+    'UA Attribution: code=' +
+      code +
+      ', payload=' +
+      safeStringify(attributionInfo ?? null)
+  );
+};
+
+const handleREAttribution: attribution = (code, attributionInfo) => {
+  log(
+    'RE Attribution: code=' +
+      code +
+      ', payload=' +
+      safeStringify(attributionInfo ?? null)
+  );
 };
 
 const handleDeepLink: deeplink = (code, deepLinkInfo) => {
@@ -321,6 +338,8 @@ export default function App() {
       config,
       remoteConfig: buildRemoteConfig(),
       attribution: handleAttribution,
+      uaAttribution: handleUAAttribution,
+      reAttribution: handleREAttribution,
       deeplink: handleDeepLink,
       deferredDeeplink: handleDeferredDeeplink,
     };
@@ -882,6 +901,20 @@ export default function App() {
       const result = SolarEngine.retrieveAttribution();
       log('Attribution: ' + JSON.stringify(result));
     },
+    getUAAttr: () => {
+      logCall('getUAAttributionData');
+      log(
+        'UA Attribution: payload=' +
+          safeStringify(SolarEngine.getUAAttributionData())
+      );
+    },
+    getREAttr: () => {
+      logCall('getREAttributionData');
+      log(
+        'RE Attribution: payload=' +
+          safeStringify(SolarEngine.getREAttributionData())
+      );
+    },
     openUrl: () => {
       const url = 'link://www.example.com/programs?action=showall';
       logCall('appDeeplinkOpenURL', { url });
@@ -1251,6 +1284,14 @@ export default function App() {
             onPress={_attrActions.retrieveAttr}
           />
           <DemoButton title="Open URL" onPress={_attrActions.openUrl} />
+          <DemoButton
+            title="Get UA Attribution"
+            onPress={_attrActions.getUAAttr}
+          />
+          <DemoButton
+            title="Get RE Attribution"
+            onPress={_attrActions.getREAttr}
+          />
         </Section>
 
         <Section title="远程配置">
