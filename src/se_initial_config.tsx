@@ -132,7 +132,7 @@ declare type RemoteConfig = {
 declare type SolarEngineInitiateOptions = {
   config?: se_initial_config;
   remoteConfig?: RemoteConfig;
-  /** @deprecated Use uaAttribution and reAttribution or the listener registration functions instead. */
+  /** @deprecated Use uaAttribution and reAttribution instead. */
   attribution?: attribution;
   uaAttribution?: attribution;
   reAttribution?: attribution;

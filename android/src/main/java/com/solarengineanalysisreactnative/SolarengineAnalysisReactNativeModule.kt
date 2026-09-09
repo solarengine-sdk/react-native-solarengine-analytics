@@ -104,30 +104,6 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
 
-  private fun setUAAttributionCallback(callback: Callback) {
-    val singleton = SolarEngineSingleton.getInstance()
-    synchronized(singleton) {
-      singleton.uaAttribution = callback
-    }
-  }
-
-  private fun getUAAttributionCallback(): Callback? {
-    val singleton = SolarEngineSingleton.getInstance()
-    return synchronized(singleton) { singleton.uaAttribution }
-  }
-
-  private fun setREAttributionCallback(callback: Callback) {
-    val singleton = SolarEngineSingleton.getInstance()
-    synchronized(singleton) {
-      singleton.reAttribution = callback
-    }
-  }
-
-  private fun getREAttributionCallback(): Callback? {
-    val singleton = SolarEngineSingleton.getInstance()
-    return synchronized(singleton) { singleton.reAttribution }
-  }
-
   private fun takeAttributionCallback(): Callback? {
     val singleton = SolarEngineSingleton.getInstance()
     return synchronized(singleton) {
@@ -223,17 +199,6 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
   }
 
   @ReactMethod
-  override fun setUAAttributionListener(callback: Callback) {
-    log("", "setUAAttributionListener")
-    setUAAttributionCallback(callback)
-  }
-
-  @ReactMethod
-  override fun setREAttributionListener(callback: Callback) {
-    log("", "setREAttributionListener")
-    setREAttributionCallback(callback)
-  }
-  @ReactMethod
   override fun registerDeeplink(deeplink: Callback) {
     log("","registerDeeplink")
 
@@ -324,7 +289,14 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     setInitiateCompleteCallback(initiateComplete)
   }
   @ReactMethod
-  override fun initialize(appKey: String, configMap: ReadableMap?, remoteConfigMap: ReadableMap?, customDomainMap: ReadableMap?) {
+  override fun initialize(
+    appKey: String,
+    configMap: ReadableMap?,
+    remoteConfigMap: ReadableMap?,
+    customDomainMap: ReadableMap?,
+    uaAttribution: Callback?,
+    reAttribution: Callback?
+  ) {
 
     log(
       "appKey: $appKey, configMap: $configMap, remoteConfigMap: $remoteConfigMap, customDomainMap: $customDomainMap",
@@ -533,7 +505,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
     // enableODID / enableAAID are Harmony-only; Android 1.3.2 SolarEngineConfig.Builder has no such methods.
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
-    getUAAttributionCallback()?.let { callback ->
+    uaAttribution?.let { callback ->
       solarEngineConfig.setUAAttributionListener(object : OnAttributionListener {
         override fun onAttributionSuccess(attribution: JSONObject) {
           log("attribution: $attribution", "onUAAttributionSuccess")
@@ -551,7 +523,7 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
         }
       })
     }
-    getREAttributionCallback()?.let { callback ->
+    reAttribution?.let { callback ->
       solarEngineConfig.setREAttributionListener(object : OnAttributionListener {
         override fun onAttributionSuccess(attribution: JSONObject) {
           log("attribution: $attribution", "onREAttributionSuccess")

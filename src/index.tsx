@@ -9,7 +9,7 @@ import {
   objectItem,
 } from './ConfigItem';
 
-const SolarEnginePluginVersion = '1.7.2';
+export const SolarEnginePluginVersion = '1.7.2';
 
 import type {
   SolarEngineInitiateOptions,
@@ -170,12 +170,12 @@ function _handleAttribution(attribution: attribution | undefined) {
   });
 }
 
-function _handleSeparatedAttribution(
+function _buildSeparatedAttributionCallback(
   kind: 'UA' | 'RE',
   callback: attribution | undefined
-) {
+): ((code: number, attributionData?: Object) => void) | undefined {
   if (callback === undefined) {
-    return;
+    return undefined;
   }
   if (
     Platform.OS !== 'ios' &&
@@ -183,15 +183,10 @@ function _handleSeparatedAttribution(
     !harmonyPlatform()
   ) {
     log(`"set${kind}AttributionListener" is not supported on this platform`);
-    return;
+    return undefined;
   }
 
-  const register =
-    kind === 'UA'
-      ? SolarengineAnalysis.setUAAttributionListener
-      : SolarengineAnalysis.setREAttributionListener;
-
-  register((code: number, attributionData?: Object) => {
+  return (code: number, attributionData?: Object) => {
     if (code !== 0) {
       callback(code);
       return;
@@ -202,7 +197,7 @@ function _handleSeparatedAttribution(
     } else {
       callback(-1);
     }
-  });
+  };
 }
 
 function _handleDeepLink(deeplink: deeplink | undefined) {
@@ -343,8 +338,14 @@ export function initialize(
   _setReactNativeBridgeVersion();
 
   _handleAttribution(options.attribution);
-  _handleSeparatedAttribution('UA', options.uaAttribution);
-  _handleSeparatedAttribution('RE', options.reAttribution);
+  const uaAttribution = _buildSeparatedAttributionCallback(
+    'UA',
+    options.uaAttribution
+  );
+  const reAttribution = _buildSeparatedAttributionCallback(
+    'RE',
+    options.reAttribution
+  );
   _handleDeepLink(options.deeplink);
   _handleDeferredDeeplink(options.deferredDeeplink);
 
@@ -358,7 +359,9 @@ export function initialize(
     appKey,
     options.config || {},
     options.remoteConfig || {},
-    options.customDomain || {}
+    options.customDomain || {},
+    uaAttribution,
+    reAttribution
   );
 }
 
@@ -400,14 +403,6 @@ export function getREAttributionData(): AttributionInfo | null {
   }
   log('"getREAttributionData" is not supported on this platform');
   return null;
-}
-
-export function setUAAttributionListener(callback: attribution): void {
-  _handleSeparatedAttribution('UA', callback);
-}
-
-export function setREAttributionListener(callback: attribution): void {
-  _handleSeparatedAttribution('RE', callback);
 }
 
 /************** DistinctId *****************/

@@ -10,17 +10,13 @@ export interface Spec extends TurboModule {
     appKey: string,
     config: Object,
     remoteConfig: Object,
-    customDomain: Object
+    customDomain: Object,
+    uaAttribution?: (code: number, attributionData?: Object) => void,
+    reAttribution?: (code: number, attributionData?: Object) => void
   ): void;
   setReactNativeBridgeVersion(version: string): void;
   registerInitiateComplete(callback: (code: number) => void): void;
   registerAttribution(callback: (result: Object) => void): void;
-  setUAAttributionListener(
-    callback: (code: number, attributionData?: Object) => void
-  ): void;
-  setREAttributionListener(
-    callback: (code: number, attributionData?: Object) => void
-  ): void;
   registerDeeplink(callback: (result: Object) => void): void;
   registerDeferredDeeplink(callback: (result: Object) => void): void;
 

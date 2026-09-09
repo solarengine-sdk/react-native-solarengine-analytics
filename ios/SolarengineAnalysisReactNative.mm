@@ -133,7 +133,12 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
 #endif
 
 // MARK: - initialize
-- (void)_initialize:(NSString *)appKey config:(NSDictionary *)config remoteConfig:(NSDictionary *)remoteConfig customDomain:(NSDictionary *)customDomain {
+- (void)_initialize:(NSString *)appKey
+             config:(NSDictionary *)config
+       remoteConfig:(NSDictionary *)remoteConfig
+       customDomain:(NSDictionary *)customDomain
+   uaAttribution:(RCTResponseSenderBlock)uaAttribution
+   reAttribution:(RCTResponseSenderBlock)reAttribution {
   
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
   
@@ -322,21 +327,49 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
     seconfig.enableIPV6 = [config[@"enableIPV6"] boolValue];
   }
 
+  if (uaAttribution != nil) {
+    [[SolarEngineSDK sharedInstance] setUAAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
+      uaAttribution(@[@(code), attributionData ?: [NSNull null]]);
+    }];
+  }
+  if (reAttribution != nil) {
+    [[SolarEngineSDK sharedInstance] setREAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
+      reAttribution(@[@(code), attributionData ?: [NSNull null]]);
+    }];
+  }
+
   [SolarengineAnalysisReactNative log:config method:_cmd];
   [[SolarEngineSDK sharedInstance] startWithAppKey:appKey config:seconfig];
 }
 
 
 #ifdef RCT_NEW_ARCH_ENABLED
-- (void)initialize:(NSString *)appKey config:(NSDictionary *)config remoteConfig:(NSDictionary *)remoteConfig customDomain:(NSDictionary *)customDomain {
-  [self _initialize:appKey config:config remoteConfig:remoteConfig customDomain:customDomain];
+- (void)initialize:(NSString *)appKey
+            config:(NSDictionary *)config
+      remoteConfig:(NSDictionary *)remoteConfig
+      customDomain:(NSDictionary *)customDomain
+     uaAttribution:(RCTResponseSenderBlock)uaAttribution
+     reAttribution:(RCTResponseSenderBlock)reAttribution {
+  [self _initialize:appKey
+             config:config
+       remoteConfig:remoteConfig
+       customDomain:customDomain
+   uaAttribution:uaAttribution
+   reAttribution:reAttribution];
 }
 #else
 RCT_EXPORT_METHOD(initialize:(NSString *)appKey
                   config:(NSDictionary *)config
                   remoteConfig:(NSDictionary *)remoteConfig
-                  customDomain:(NSDictionary *)customDomain) {
-  [self _initialize:appKey config:config remoteConfig:remoteConfig customDomain:customDomain];
+                  customDomain:(NSDictionary *)customDomain
+                  uaAttribution:(RCTResponseSenderBlock)uaAttribution
+                  reAttribution:(RCTResponseSenderBlock)reAttribution) {
+  [self _initialize:appKey
+             config:config
+       remoteConfig:remoteConfig
+       customDomain:customDomain
+   uaAttribution:uaAttribution
+   reAttribution:reAttribution];
 }
 #endif
 
@@ -403,51 +436,6 @@ RCT_EXPORT_METHOD(registerAttribution:(RCTResponseSenderBlock)callback) {
   [self _registerAttribution:callback];
 }
 #endif
-
-// MARK: - separated attribution
-- (void)_setUAAttributionListener:(RCTResponseSenderBlock)callback {
-  [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
-  if (callback == nil) {
-    return;
-  }
-
-  [[SolarEngineSDK sharedInstance] setUAAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
-    callback(@[@(code), attributionData ?: [NSNull null]]);
-  }];
-}
-
-#ifdef RCT_NEW_ARCH_ENABLED
-- (void)setUAAttributionListener:(RCTResponseSenderBlock)callback {
-  [self _setUAAttributionListener:callback];
-}
-#else
-RCT_EXPORT_METHOD(setUAAttributionListener:(RCTResponseSenderBlock)callback) {
-  [self _setUAAttributionListener:callback];
-}
-#endif
-
-- (void)_setREAttributionListener:(RCTResponseSenderBlock)callback {
-  [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
-  if (callback == nil) {
-    return;
-  }
-
-  [[SolarEngineSDK sharedInstance] setREAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
-    callback(@[@(code), attributionData ?: [NSNull null]]);
-  }];
-}
-
-#ifdef RCT_NEW_ARCH_ENABLED
-- (void)setREAttributionListener:(RCTResponseSenderBlock)callback {
-  [self _setREAttributionListener:callback];
-}
-#else
-RCT_EXPORT_METHOD(setREAttributionListener:(RCTResponseSenderBlock)callback) {
-  [self _setREAttributionListener:callback];
-}
-#endif
-
-
 
 - (void)_registerDeeplink:(RCTResponseSenderBlock)deeplink{
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];

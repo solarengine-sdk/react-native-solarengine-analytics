@@ -156,48 +156,6 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  setUAAttributionListener(callback: (code: number, attributionData?: Object) => void) {
-    logInfo(`${_SolarEngineLog} setUAAttributionListener`);
-    try {
-      const attributionListener: AttributionListener = {
-        onAttributionSuccess: (attribution: Record<string, Object>) => {
-          logInfo(`${_SolarEngineLog} UA attribution success`);
-          callback?.(0, attribution);
-        },
-        onAttributionFailed: (errorCode: number) => {
-          logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
-          callback?.(errorCode);
-        }
-      };
-      SolarEngineManager.setUAAttributionListener(attributionListener);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setUAAttributionListener failed:`, error);
-      logError(`${_SolarEngineLog} setUAAttributionListener failed`);
-      callback?.(-1);
-    }
-  }
-
-  setREAttributionListener(callback: (code: number, attributionData?: Object) => void) {
-    logInfo(`${_SolarEngineLog} setREAttributionListener`);
-    try {
-      const attributionListener: AttributionListener = {
-        onAttributionSuccess: (attribution: Record<string, Object>) => {
-          logInfo(`${_SolarEngineLog} RE attribution success`);
-          callback?.(0, attribution);
-        },
-        onAttributionFailed: (errorCode: number) => {
-          logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
-          callback?.(errorCode);
-        }
-      };
-      SolarEngineManager.setREAttributionListener(attributionListener);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setREAttributionListener failed:`, error);
-      logError(`${_SolarEngineLog} setREAttributionListener failed`);
-      callback?.(-1);
-    }
-  }
-
   registerDeeplink(callback: (result: Object) => void) {
     if (_log) {
       console.log(_SolarEngineLog, "registerDeeplink")
@@ -312,7 +270,14 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  initialize(appkey: string, config: object, rcConfig: object, customDomain: object) {
+  initialize(
+    appkey: string,
+    config: object,
+    rcConfig: object,
+    customDomain: object,
+    uaAttribution?: (code: number, attributionData?: Object) => void,
+    reAttribution?: (code: number, attributionData?: Object) => void
+  ) {
     if (_log) {
       console.log(`${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
     }
@@ -370,6 +335,32 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       if (_log) {
         console.log(`${_SolarEngineLog} solarEngineConfig :${JSON.stringify(solarEngineConfig)}`);
 
+      }
+      if (uaAttribution) {
+        const attributionListener: AttributionListener = {
+          onAttributionSuccess: (attribution: Record<string, Object>) => {
+            logInfo(`${_SolarEngineLog} UA attribution success`);
+            uaAttribution(0, attribution);
+          },
+          onAttributionFailed: (errorCode: number) => {
+            logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
+            uaAttribution(errorCode);
+          }
+        };
+        SolarEngineManager.setUAAttributionListener(attributionListener);
+      }
+      if (reAttribution) {
+        const attributionListener: AttributionListener = {
+          onAttributionSuccess: (attribution: Record<string, Object>) => {
+            logInfo(`${_SolarEngineLog} RE attribution success`);
+            reAttribution(0, attribution);
+          },
+          onAttributionFailed: (errorCode: number) => {
+            logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
+            reAttribution(errorCode);
+          }
+        };
+        SolarEngineManager.setREAttributionListener(attributionListener);
       }
       SolarEngineManager.initialize(this.ctx.uiAbilityContext, appkey, solarEngineConfig);
     } catch (error) {
