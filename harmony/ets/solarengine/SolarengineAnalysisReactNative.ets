@@ -287,34 +287,87 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       const harmonyConfig =
         localConfig[SolarEngineConfigConstant.Harmony] as Record<string, Object> | undefined;
 
-      solarEngineConfig.isDebugMode = config[SolarEngineConfigConstant.IsDebugModel];
-      solarEngineConfig.logEnabled = config[SolarEngineConfigConstant.LogEnabled];
-      solarEngineConfig.enableDeferredDeeplink = config[SolarEngineConfigConstant.EnableDelayDeeplink];
+      if (config[SolarEngineConfigConstant.IsDebugModel] !== undefined &&
+        config[SolarEngineConfigConstant.IsDebugModel] !== null) {
+        solarEngineConfig.isDebugMode = config[SolarEngineConfigConstant.IsDebugModel] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.LogEnabled] !== undefined &&
+        config[SolarEngineConfigConstant.LogEnabled] !== null) {
+        solarEngineConfig.logEnabled = config[SolarEngineConfigConstant.LogEnabled] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableDelayDeeplink] !== undefined &&
+        config[SolarEngineConfigConstant.EnableDelayDeeplink] !== null) {
+        solarEngineConfig.enableDeferredDeeplink =
+          config[SolarEngineConfigConstant.EnableDelayDeeplink] as boolean;
+      }
       if (
         harmonyConfig &&
-        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined
+        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
       ) {
         solarEngineConfig.authorizationTimeout = Number(
           harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout]
         );
       }
-      solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G];
-      solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6];
-      solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID];
-      solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution];
-      solarEngineConfig.enableSeparatedAttribution = config[SolarEngineConfigConstant.EnableSeparatedAttribution];
-      solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics];
-      solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage];
-      solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale];
-      solarEngineConfig.enableTimeZone = config[SolarEngineConfigConstant.EnableTimeZone];
-      solarEngineConfig.enableScreenWH = config[SolarEngineConfigConstant.EnableScreenWH];
-      solarEngineConfig.enableDensity = config[SolarEngineConfigConstant.EnableDensity];
-      solarEngineConfig.enableNetworkType = config[SolarEngineConfigConstant.EnableNetworkType];
-      solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA];
-      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableODID] !== undefined) {
+      if (config[SolarEngineConfigConstant.Enable2G] !== undefined &&
+        config[SolarEngineConfigConstant.Enable2G] !== null) {
+        solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableIPV6] !== undefined &&
+        config[SolarEngineConfigConstant.EnableIPV6] !== null) {
+        solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableOAID] !== undefined &&
+        config[SolarEngineConfigConstant.EnableOAID] !== null) {
+        solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableAttribution] !== undefined &&
+        config[SolarEngineConfigConstant.EnableAttribution] !== null) {
+        solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableSeparatedAttribution] !== undefined &&
+        config[SolarEngineConfigConstant.EnableSeparatedAttribution] !== null) {
+        solarEngineConfig.enableSeparatedAttribution =
+          config[SolarEngineConfigConstant.EnableSeparatedAttribution] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableAnalytics] !== undefined &&
+        config[SolarEngineConfigConstant.EnableAnalytics] !== null) {
+        solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableLanguage] !== undefined &&
+        config[SolarEngineConfigConstant.EnableLanguage] !== null) {
+        solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableLocale] !== undefined &&
+        config[SolarEngineConfigConstant.EnableLocale] !== null) {
+        solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableTimeZone] !== undefined &&
+        config[SolarEngineConfigConstant.EnableTimeZone] !== null) {
+        solarEngineConfig.enableTimeZone = config[SolarEngineConfigConstant.EnableTimeZone] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableScreenWH] !== undefined &&
+        config[SolarEngineConfigConstant.EnableScreenWH] !== null) {
+        solarEngineConfig.enableScreenWH = config[SolarEngineConfigConstant.EnableScreenWH] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableDensity] !== undefined &&
+        config[SolarEngineConfigConstant.EnableDensity] !== null) {
+        solarEngineConfig.enableDensity = config[SolarEngineConfigConstant.EnableDensity] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableNetworkType] !== undefined &&
+        config[SolarEngineConfigConstant.EnableNetworkType] !== null) {
+        solarEngineConfig.enableNetworkType = config[SolarEngineConfigConstant.EnableNetworkType] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableUA] !== undefined &&
+        config[SolarEngineConfigConstant.EnableUA] !== null) {
+        solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA] as boolean;
+      }
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableODID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableODID] !== null) {
         solarEngineConfig.enableODID = harmonyConfig[SolarEngineConfigConstant.EnableODID] as boolean;
       }
-      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== undefined) {
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== null) {
         solarEngineConfig.enableAAID = harmonyConfig[SolarEngineConfigConstant.EnableAAID] as boolean;
       }
 
@@ -383,11 +436,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     if (_log) {
       console.log(_SolarEngineLog, "setChannel", channel);
     }
-    try {
-      SolarEngineManager.setChannel(channel);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setChannel failed:`, error);
-    }
+    // SolarEngine 2.0.0 removed the public setChannel API; no-op on harmony.
+    console.warn(`${_SolarEngineLog} setChannel is not supported since SolarEngine 2.0.0`);
   }
 
   setVisitorID(visitor: string) {
@@ -716,10 +766,7 @@ export class SolarengineAnalysisReactNative extends TurboModule {
           customEventModel.checkId = firstCheckId;
           customEventModel.preProperties = eventAttribute[SEConstant.First_Custom_EVENT_PRE];
           customEventModel.customProperties = eventAttribute[SEConstant.First_Custom_EVENT_CUSTOM] || {};
-          const eventAlias = eventAttribute[SEConstant.Event_ALIAS] as string | undefined;
-          if (eventAlias) {
-            customEventModel.eventAlias = eventAlias;
-          }
+          customEventModel.eventAlias = eventAttribute[SEConstant.Event_ALIAS] || "";
           SolarEngineManager.trackFirstEvent(customEventModel);
           break;
       }
