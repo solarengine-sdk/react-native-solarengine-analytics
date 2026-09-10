@@ -40,7 +40,8 @@ const AndroidAppKey = 'd81f85a878ff54b0'; // CN
 const iOSAppKey = '7b2a992e08ca8800'; // CN (also temporarily used by VG)
 const HMAppKey = '16e503718a7305f5'; // current Harmony test environment
 
-const LOG_PREFIX = '[SeSDK Demo]';
+const RN_SDK_VERSION = SolarEngine.SolarEnginePluginVersion;
+const LOG_PREFIX = `[SeSDK Demo][RN SDK v${RN_SDK_VERSION}]`;
 let logSeq = 0;
 type IosAutoRunState = { started: boolean; completed: boolean };
 
@@ -229,7 +230,6 @@ function buildInitialConfig(enabled = true): se_initial_config {
     ios: {
       attAuthorizationWaitingInterval: 60,
       caid: '[{"version":"20220111","caid":"912ec803b2ce49e4a541068d495ab570"}]',
-      enableODMInfo: false, // overseas SDK only
     },
     harmony: {
       authorizationTimeout: 100,

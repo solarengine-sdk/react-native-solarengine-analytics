@@ -157,48 +157,6 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  setUAAttributionListener(callback: (code: number, attributionData?: Object) => void) {
-    logInfo(`${_SolarEngineLog} setUAAttributionListener`);
-    try {
-      const attributionListener: AttributionListener = {
-        onAttributionSuccess: (attribution: Record<string, Object>) => {
-          logInfo(`${_SolarEngineLog} UA attribution success`);
-          callback?.(0, attribution);
-        },
-        onAttributionFailed: (errorCode: number) => {
-          logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
-          callback?.(errorCode);
-        }
-      };
-      SolarEngineManager.setUAAttributionListener(attributionListener);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setUAAttributionListener failed:`, error);
-      logError(`${_SolarEngineLog} setUAAttributionListener failed`);
-      callback?.(-1);
-    }
-  }
-
-  setREAttributionListener(callback: (code: number, attributionData?: Object) => void) {
-    logInfo(`${_SolarEngineLog} setREAttributionListener`);
-    try {
-      const attributionListener: AttributionListener = {
-        onAttributionSuccess: (attribution: Record<string, Object>) => {
-          logInfo(`${_SolarEngineLog} RE attribution success`);
-          callback?.(0, attribution);
-        },
-        onAttributionFailed: (errorCode: number) => {
-          logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
-          callback?.(errorCode);
-        }
-      };
-      SolarEngineManager.setREAttributionListener(attributionListener);
-    } catch (error) {
-      console.error(`${_SolarEngineLog} setREAttributionListener failed:`, error);
-      logError(`${_SolarEngineLog} setREAttributionListener failed`);
-      callback?.(-1);
-    }
-  }
-
   registerDeeplink(callback: (result: Object) => void) {
     if (_log) {
       console.log(_SolarEngineLog, "registerDeeplink")
@@ -313,7 +271,14 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
-  initialize(appkey: string, config: object, rcConfig: object, customDomain: object) {
+  initialize(
+    appkey: string,
+    config: object,
+    rcConfig: object,
+    customDomain: object,
+    uaAttribution?: (code: number, attributionData?: Object) => void,
+    reAttribution?: (code: number, attributionData?: Object) => void
+  ) {
     if (_log) {
       console.log(
         `${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
@@ -322,34 +287,91 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       const solarEngineConfig = new SolarEngineConfig();
       const localConfig = config as Record<string, Object>;
       const harmonyConfig =
-        localConfig[SolarEngineConfigConstant.Harmony] as Record<string, number> | undefined;
+        localConfig[SolarEngineConfigConstant.Harmony] as Record<string, Object> | undefined;
 
-      solarEngineConfig.isDebugMode = config[SolarEngineConfigConstant.IsDebugModel];
-      solarEngineConfig.logEnabled = config[SolarEngineConfigConstant.LogEnabled];
-      solarEngineConfig.enableDeferredDeeplink = config[SolarEngineConfigConstant.EnableDelayDeeplink];
+      if (config[SolarEngineConfigConstant.IsDebugModel] !== undefined &&
+        config[SolarEngineConfigConstant.IsDebugModel] !== null) {
+        solarEngineConfig.isDebugMode = config[SolarEngineConfigConstant.IsDebugModel] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.LogEnabled] !== undefined &&
+        config[SolarEngineConfigConstant.LogEnabled] !== null) {
+        solarEngineConfig.logEnabled = config[SolarEngineConfigConstant.LogEnabled] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableDelayDeeplink] !== undefined &&
+        config[SolarEngineConfigConstant.EnableDelayDeeplink] !== null) {
+        solarEngineConfig.enableDeferredDeeplink =
+          config[SolarEngineConfigConstant.EnableDelayDeeplink] as boolean;
+      }
       if (
         harmonyConfig &&
-          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined
+          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
+          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
       ) {
         solarEngineConfig.authorizationTimeout = Number(
           harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout]
         );
       }
-      solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G];
-      solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6];
-      solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID];
-      solarEngineConfig.enableODID = config[SolarEngineConfigConstant.EnableODID];
-      solarEngineConfig.enableAAID = config[SolarEngineConfigConstant.EnableAAID];
-      solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution];
-      solarEngineConfig.enableSeparatedAttribution = config[SolarEngineConfigConstant.EnableSeparatedAttribution];
-      solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics];
-      solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage];
-      solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale];
-      solarEngineConfig.enableTimeZone = config[SolarEngineConfigConstant.EnableTimeZone];
-      solarEngineConfig.enableScreenWH = config[SolarEngineConfigConstant.EnableScreenWH];
-      solarEngineConfig.enableDensity = config[SolarEngineConfigConstant.EnableDensity];
-      solarEngineConfig.enableNetworkType = config[SolarEngineConfigConstant.EnableNetworkType];
-      solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA];
+      if (config[SolarEngineConfigConstant.Enable2G] !== undefined &&
+        config[SolarEngineConfigConstant.Enable2G] !== null) {
+        solarEngineConfig.enable2GReporting = config[SolarEngineConfigConstant.Enable2G] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableIPV6] !== undefined &&
+        config[SolarEngineConfigConstant.EnableIPV6] !== null) {
+        solarEngineConfig.enableIPV6 = config[SolarEngineConfigConstant.EnableIPV6] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableOAID] !== undefined &&
+        config[SolarEngineConfigConstant.EnableOAID] !== null) {
+        solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID] as boolean;
+      }
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableODID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableODID] !== null) {
+        solarEngineConfig.enableODID = harmonyConfig[SolarEngineConfigConstant.EnableODID] as boolean;
+      }
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== null) {
+        solarEngineConfig.enableAAID = harmonyConfig[SolarEngineConfigConstant.EnableAAID] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableAttribution] !== undefined &&
+        config[SolarEngineConfigConstant.EnableAttribution] !== null) {
+        solarEngineConfig.enableAttribution = config[SolarEngineConfigConstant.EnableAttribution] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableSeparatedAttribution] !== undefined &&
+        config[SolarEngineConfigConstant.EnableSeparatedAttribution] !== null) {
+        solarEngineConfig.enableSeparatedAttribution =
+          config[SolarEngineConfigConstant.EnableSeparatedAttribution] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableAnalytics] !== undefined &&
+        config[SolarEngineConfigConstant.EnableAnalytics] !== null) {
+        solarEngineConfig.enableAnalytics = config[SolarEngineConfigConstant.EnableAnalytics] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableLanguage] !== undefined &&
+        config[SolarEngineConfigConstant.EnableLanguage] !== null) {
+        solarEngineConfig.enableLanguage = config[SolarEngineConfigConstant.EnableLanguage] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableLocale] !== undefined &&
+        config[SolarEngineConfigConstant.EnableLocale] !== null) {
+        solarEngineConfig.enableLocale = config[SolarEngineConfigConstant.EnableLocale] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableTimeZone] !== undefined &&
+        config[SolarEngineConfigConstant.EnableTimeZone] !== null) {
+        solarEngineConfig.enableTimeZone = config[SolarEngineConfigConstant.EnableTimeZone] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableScreenWH] !== undefined &&
+        config[SolarEngineConfigConstant.EnableScreenWH] !== null) {
+        solarEngineConfig.enableScreenWH = config[SolarEngineConfigConstant.EnableScreenWH] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableDensity] !== undefined &&
+        config[SolarEngineConfigConstant.EnableDensity] !== null) {
+        solarEngineConfig.enableDensity = config[SolarEngineConfigConstant.EnableDensity] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableNetworkType] !== undefined &&
+        config[SolarEngineConfigConstant.EnableNetworkType] !== null) {
+        solarEngineConfig.enableNetworkType = config[SolarEngineConfigConstant.EnableNetworkType] as boolean;
+      }
+      if (config[SolarEngineConfigConstant.EnableUA] !== undefined &&
+        config[SolarEngineConfigConstant.EnableUA] !== null) {
+        solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA] as boolean;
+      }
 
 
       if (rcConfig) {
@@ -368,6 +390,32 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       if (_log) {
         console.log(`${_SolarEngineLog} solarEngineConfig :${JSON.stringify(solarEngineConfig)}`);
 
+      }
+      if (uaAttribution) {
+        const attributionListener: AttributionListener = {
+          onAttributionSuccess: (attribution: Record<string, Object>) => {
+            logInfo(`${_SolarEngineLog} UA attribution success`);
+            uaAttribution(0, attribution);
+          },
+          onAttributionFailed: (errorCode: number) => {
+            logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
+            uaAttribution(errorCode);
+          }
+        };
+        SolarEngineManager.setUAAttributionListener(attributionListener);
+      }
+      if (reAttribution) {
+        const attributionListener: AttributionListener = {
+          onAttributionSuccess: (attribution: Record<string, Object>) => {
+            logInfo(`${_SolarEngineLog} RE attribution success`);
+            reAttribution(0, attribution);
+          },
+          onAttributionFailed: (errorCode: number) => {
+            logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
+            reAttribution(errorCode);
+          }
+        };
+        SolarEngineManager.setREAttributionListener(attributionListener);
       }
       SolarEngineManager.initialize(this.ctx.uiAbilityContext, appkey, solarEngineConfig);
     } catch (error) {

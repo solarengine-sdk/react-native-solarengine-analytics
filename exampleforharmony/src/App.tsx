@@ -11,7 +11,6 @@ import {
   useColorScheme,
   Linking,
 } from 'react-native';
-
 import * as SolarEngine from 'solarengine-analysis-react-native';
 import type {
   RemoteConfig,
@@ -39,7 +38,8 @@ const AndroidAppKey = 'd81f85a878ff54b0'; // CN
 const iOSAppKey = '7b2a992e08ca8800'; // CN (also temporarily used by VG)
 const HMAppKey = '16e503718a7305f5'; // current Harmony test environment
 
-const LOG_PREFIX = '[SeSDK Demo]';
+const RN_SDK_VERSION = SolarEngine.SolarEnginePluginVersion;
+const LOG_PREFIX = `[SeSDK Demo][RN SDK v${RN_SDK_VERSION}]`;
 let logSeq = 0;
 
 const nextLogSeq = () => {
@@ -174,6 +174,10 @@ function buildInitialConfig(enabled = true): se_initial_config {
       authorizationTimeout: 100,
     },
   };
+}
+
+function buildInitialConfigMinimal(): se_initial_config {
+  return { enableLog: true };
 }
 
 function buildRemoteConfig(): RemoteConfig {
@@ -350,6 +354,37 @@ export default function App() {
         options,
         (result: InitiateCompletionInfo) => {
           log('Initialize result: ' + JSON.stringify(result));
+          resolve(result);
+        }
+      );
+    });
+  };
+
+  const _initializeMinimal = (): Promise<InitiateCompletionInfo> => {
+    const appKey = HMAppKey;
+    log('initialize (log-only) platform: ' + Platform.OS);
+    logCall('initialize.logOnly', {
+      platform: Platform.OS,
+      appKey,
+      config: { enableLog: true },
+    });
+
+    const options: SolarEngineInitiateOptions = {
+      config: buildInitialConfigMinimal(),
+      remoteConfig: buildRemoteConfig(),
+      attribution: handleAttribution,
+      uaAttribution: handleUAAttribution,
+      reAttribution: handleREAttribution,
+      deeplink: handleDeepLink,
+      deferredDeeplink: handleDeferredDeeplink,
+    };
+
+    return new Promise((resolve) => {
+      SolarEngine.initialize(
+        appKey,
+        options,
+        (result: InitiateCompletionInfo) => {
+          log('Initialize (log-only) result: ' + JSON.stringify(result));
           resolve(result);
         }
       );
@@ -1143,6 +1178,11 @@ export default function App() {
               onPress={() => _initialize(initializeCase.enabled)}
             />
           ))}
+          <DemoButton
+            title="Initialize (log only)"
+            color="#FF9800"
+            onPress={_initializeMinimal}
+          />
         </Section>
 
         <Section title="用户操作">

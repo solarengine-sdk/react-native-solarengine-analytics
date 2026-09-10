@@ -7,6 +7,7 @@ const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const root = path.resolve(__dirname, '..');
 const releaseArtifactsPath = path.join(root, 'release-artifacts');
+const worktreesPath = path.join(root, '.worktrees');
 const harmonyConfig = createHarmonyMetroConfig({
   reactNativeHarmonyPackageName: '@react-native-oh/react-native-harmony',
 });
@@ -22,6 +23,9 @@ module.exports = mergeConfig(
       blockList: exclusionList([
         new RegExp(
           `^${releaseArtifactsPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\/.*$`
+        ),
+        new RegExp(
+          `^${worktreesPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\/.*$`
         ),
       ]),
       nodeModulesPaths: [
