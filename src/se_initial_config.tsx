@@ -84,8 +84,6 @@ export type se_initial_config = {
   ios?: {
     attAuthorizationWaitingInterval?: number;
     caid?: string;
-    // iOS only (overseas SDK). Enables ODM info attribution for Google iOS campaigns. Default false. Not supported on the CN SDK.
-    enableODMInfo?: boolean;
   };
 };
 

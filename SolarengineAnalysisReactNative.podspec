@@ -60,14 +60,17 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm,cpp}"
   s.private_header_files = "ios/**/*.h"
 
-  # 判断 SOLARENGINE_IOS_SDK_VERSION 是否为空字符串
-  if ENV['SOLARENGINE_IOS_SDK_VERSION'] && !ENV['SOLARENGINE_IOS_SDK_VERSION'].strip.empty?
-    puts "SolarEngine iOS sdk version: #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
-    s.dependency solar_engine_pod_name, ">= #{ENV['SOLARENGINE_IOS_SDK_VERSION']}"
+  configured_ios_sdk_version = ENV['SOLARENGINE_IOS_SDK_VERSION'].to_s.strip
+  ios_sdk_dependency_version = minimum_ios_sdk_version
+
+  if !configured_ios_sdk_version.empty?
+    ios_sdk_dependency_version = Gem::Version.new(configured_ios_sdk_version)
+    puts "SolarEngine iOS sdk version: #{configured_ios_sdk_version}"
   else
-    puts "SolarEngine iOS SDK: using the latest version"
-    s.dependency solar_engine_pod_name
+    puts "SolarEngine iOS SDK: using version >= #{minimum_ios_sdk_version}"
   end
+
+  s.dependency solar_engine_pod_name, ">= #{ios_sdk_dependency_version}"
 
   if defined?(install_modules_dependencies)
     install_modules_dependencies(s)
