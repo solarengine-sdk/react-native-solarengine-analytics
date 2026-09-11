@@ -35,6 +35,7 @@ import { TurboModule, TurboModuleContext } from '@rnoh/react-native-openharmony'
 export const _log: boolean = true;
 
 export const _SolarEngineLog: string = "[SeSDKRNBridge]:";
+
 const LOG_DOMAIN = 0x0000;
 const LOG_TAG = 'SeSDKRN';
 
@@ -156,6 +157,60 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     }
   }
 
+  setUAAttributionListener(callback: (result: Object) => void) {
+    logInfo(`${_SolarEngineLog} setUAAttributionListener`);
+    try {
+      const attributionListener: AttributionListener = {
+        onAttributionSuccess: (attribution: Record<string, Object>) => {
+          logInfo(`${_SolarEngineLog} UA attribution success`);
+          const result: SolarEngineNativeResult = {
+            reactnative_code: 0,
+            reactnative_data: attribution
+          };
+          callback?.(result);
+        },
+        onAttributionFailed: (errorCode: number) => {
+          logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
+          const result: SolarEngineNativeResult = {
+            reactnative_code: errorCode
+          };
+          callback?.(result);
+        }
+      };
+      SolarEngineManager.setUAAttributionListener(attributionListener);
+    } catch (error) {
+      console.error(`${_SolarEngineLog} setUAAttributionListener failed:`, error);
+      logError(`${_SolarEngineLog} setUAAttributionListener failed`);
+    }
+  }
+
+  setREAttributionListener(callback: (result: Object) => void) {
+    logInfo(`${_SolarEngineLog} setREAttributionListener`);
+    try {
+      const attributionListener: AttributionListener = {
+        onAttributionSuccess: (attribution: Record<string, Object>) => {
+          logInfo(`${_SolarEngineLog} RE attribution success`);
+          const result: SolarEngineNativeResult = {
+            reactnative_code: 0,
+            reactnative_data: attribution
+          };
+          callback?.(result);
+        },
+        onAttributionFailed: (errorCode: number) => {
+          logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
+          const result: SolarEngineNativeResult = {
+            reactnative_code: errorCode
+          };
+          callback?.(result);
+        }
+      };
+      SolarEngineManager.setREAttributionListener(attributionListener);
+    } catch (error) {
+      console.error(`${_SolarEngineLog} setREAttributionListener failed:`, error);
+      logError(`${_SolarEngineLog} setREAttributionListener failed`);
+    }
+  }
+
   registerDeeplink(callback: (result: Object) => void) {
     if (_log) {
       console.log(_SolarEngineLog, "registerDeeplink")
@@ -274,12 +329,11 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     appkey: string,
     config: object,
     rcConfig: object,
-    customDomain: object,
-    uaAttribution?: (result: Object) => void,
-    reAttribution?: (result: Object) => void
+    customDomain: object
   ) {
     if (_log) {
-      console.log(`${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
+      console.log(
+        `${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
     }
     try {
       const solarEngineConfig = new SolarEngineConfig();
@@ -302,8 +356,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       }
       if (
         harmonyConfig &&
-        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
-        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
+          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
+          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
       ) {
         solarEngineConfig.authorizationTimeout = Number(
           harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout]
@@ -388,46 +442,6 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       if (_log) {
         console.log(`${_SolarEngineLog} solarEngineConfig :${JSON.stringify(solarEngineConfig)}`);
 
-      }
-      if (uaAttribution) {
-        const attributionListener: AttributionListener = {
-          onAttributionSuccess: (attribution: Record<string, Object>) => {
-            logInfo(`${_SolarEngineLog} UA attribution success`);
-            const result: SolarEngineNativeResult = {
-              reactnative_code: 0,
-              reactnative_data: attribution
-            };
-            uaAttribution(result);
-          },
-          onAttributionFailed: (errorCode: number) => {
-            logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
-            const result: SolarEngineNativeResult = {
-              reactnative_code: errorCode
-            };
-            uaAttribution(result);
-          }
-        };
-        SolarEngineManager.setUAAttributionListener(attributionListener);
-      }
-      if (reAttribution) {
-        const attributionListener: AttributionListener = {
-          onAttributionSuccess: (attribution: Record<string, Object>) => {
-            logInfo(`${_SolarEngineLog} RE attribution success`);
-            const result: SolarEngineNativeResult = {
-              reactnative_code: 0,
-              reactnative_data: attribution
-            };
-            reAttribution(result);
-          },
-          onAttributionFailed: (errorCode: number) => {
-            logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
-            const result: SolarEngineNativeResult = {
-              reactnative_code: errorCode
-            };
-            reAttribution(result);
-          }
-        };
-        SolarEngineManager.setREAttributionListener(attributionListener);
       }
       SolarEngineManager.initialize(this.ctx.uiAbilityContext, appkey, solarEngineConfig);
     } catch (error) {
