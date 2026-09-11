@@ -35,7 +35,6 @@ import { TurboModule, TurboModuleContext } from '@rnoh/react-native-openharmony'
 export const _log: boolean = true;
 
 export const _SolarEngineLog: string = "[SeSDKRNBridge]:";
-
 const LOG_DOMAIN = 0x0000;
 const LOG_TAG = 'SeSDKRN';
 
@@ -276,12 +275,11 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     config: object,
     rcConfig: object,
     customDomain: object,
-    uaAttribution?: (code: number, attributionData?: Object) => void,
-    reAttribution?: (code: number, attributionData?: Object) => void
+    uaAttribution?: (result: Object) => void,
+    reAttribution?: (result: Object) => void
   ) {
     if (_log) {
-      console.log(
-        `${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
+      console.log(`${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
     }
     try {
       const solarEngineConfig = new SolarEngineConfig();
@@ -304,8 +302,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       }
       if (
         harmonyConfig &&
-          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
-          harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
+        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout] !== null
       ) {
         solarEngineConfig.authorizationTimeout = Number(
           harmonyConfig[SolarEngineConfigConstant.AuthorizationTimeout]
@@ -322,14 +320,6 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       if (config[SolarEngineConfigConstant.EnableOAID] !== undefined &&
         config[SolarEngineConfigConstant.EnableOAID] !== null) {
         solarEngineConfig.enableOAID = config[SolarEngineConfigConstant.EnableOAID] as boolean;
-      }
-      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableODID] !== undefined &&
-        harmonyConfig[SolarEngineConfigConstant.EnableODID] !== null) {
-        solarEngineConfig.enableODID = harmonyConfig[SolarEngineConfigConstant.EnableODID] as boolean;
-      }
-      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== undefined &&
-        harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== null) {
-        solarEngineConfig.enableAAID = harmonyConfig[SolarEngineConfigConstant.EnableAAID] as boolean;
       }
       if (config[SolarEngineConfigConstant.EnableAttribution] !== undefined &&
         config[SolarEngineConfigConstant.EnableAttribution] !== null) {
@@ -372,6 +362,14 @@ export class SolarengineAnalysisReactNative extends TurboModule {
         config[SolarEngineConfigConstant.EnableUA] !== null) {
         solarEngineConfig.enableUA = config[SolarEngineConfigConstant.EnableUA] as boolean;
       }
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableODID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableODID] !== null) {
+        solarEngineConfig.enableODID = harmonyConfig[SolarEngineConfigConstant.EnableODID] as boolean;
+      }
+      if (harmonyConfig && harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== undefined &&
+        harmonyConfig[SolarEngineConfigConstant.EnableAAID] !== null) {
+        solarEngineConfig.enableAAID = harmonyConfig[SolarEngineConfigConstant.EnableAAID] as boolean;
+      }
 
 
       if (rcConfig) {
@@ -395,11 +393,18 @@ export class SolarengineAnalysisReactNative extends TurboModule {
         const attributionListener: AttributionListener = {
           onAttributionSuccess: (attribution: Record<string, Object>) => {
             logInfo(`${_SolarEngineLog} UA attribution success`);
-            uaAttribution(0, attribution);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: 0,
+              reactnative_data: attribution
+            };
+            uaAttribution(result);
           },
           onAttributionFailed: (errorCode: number) => {
             logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
-            uaAttribution(errorCode);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: errorCode
+            };
+            uaAttribution(result);
           }
         };
         SolarEngineManager.setUAAttributionListener(attributionListener);
@@ -408,11 +413,18 @@ export class SolarengineAnalysisReactNative extends TurboModule {
         const attributionListener: AttributionListener = {
           onAttributionSuccess: (attribution: Record<string, Object>) => {
             logInfo(`${_SolarEngineLog} RE attribution success`);
-            reAttribution(0, attribution);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: 0,
+              reactnative_data: attribution
+            };
+            reAttribution(result);
           },
           onAttributionFailed: (errorCode: number) => {
             logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
-            reAttribution(errorCode);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: errorCode
+            };
+            reAttribution(result);
           }
         };
         SolarEngineManager.setREAttributionListener(attributionListener);
@@ -868,11 +880,12 @@ export class SolarengineAnalysisReactNative extends TurboModule {
       console.log(_SolarEngineLog, "eventEnd", eventName, JSON.stringify(attributes));
     }
     try {
-      SolarEngineManager.eventFinish(
-        eventName,
-        attributes as Record<string, object>,
-        eventAlias || ""
-      );
+      const eventProperties = attributes as Record<string, object>;
+      if (eventAlias) {
+        SolarEngineManager.eventFinish(eventName, eventProperties, eventAlias);
+      } else {
+        SolarEngineManager.eventFinish(eventName, eventProperties);
+      }
     } catch (error) {
       console.error(`${_SolarEngineLog} eventEnd failed:`, error);
     }

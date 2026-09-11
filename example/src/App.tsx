@@ -262,7 +262,7 @@ const handleAttribution: attribution = (code, attributionInfo) => {
 
 const handleUAAttribution: attribution = (code, attributionInfo) => {
   log(
-    'UA Attribution: code=' +
+    'New UA Attribution: code=' +
       code +
       ', payload=' +
       safeStringify(attributionInfo ?? null)
@@ -271,7 +271,7 @@ const handleUAAttribution: attribution = (code, attributionInfo) => {
 
 const handleREAttribution: attribution = (code, attributionInfo) => {
   log(
-    'RE Attribution: code=' +
+    'New RE Attribution: code=' +
       code +
       ', payload=' +
       safeStringify(attributionInfo ?? null)
@@ -1010,14 +1010,14 @@ export default function App() {
     getUAAttr: () => {
       logCall('getUAAttributionData');
       log(
-        'UA Attribution: payload=' +
+        'New UA Attribution: payload=' +
           safeStringify(SolarEngine.getUAAttributionData())
       );
     },
     getREAttr: () => {
       logCall('getREAttributionData');
       log(
-        'RE Attribution: payload=' +
+        'New RE Attribution: payload=' +
           safeStringify(SolarEngine.getREAttributionData())
       );
     },
@@ -1425,11 +1425,11 @@ export default function App() {
           />
           <DemoButton title="Open URL" onPress={_attrActions.openUrl} />
           <DemoButton
-            title="Get UA Attribution"
+            title="Get New UA Attribution"
             onPress={_attrActions.getUAAttr}
           />
           <DemoButton
-            title="Get RE Attribution"
+            title="Get New RE Attribution"
             onPress={_attrActions.getREAttr}
           />
         </Section>
