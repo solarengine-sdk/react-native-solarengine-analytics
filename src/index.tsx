@@ -170,12 +170,12 @@ function _handleAttribution(attribution: attribution | undefined) {
   });
 }
 
-function _buildSeparatedAttributionCallback(
+function _handleSeparatedAttribution(
   kind: 'UA' | 'RE',
   callback: attribution | undefined
-): ((result: Object) => void) | undefined {
+): void {
   if (callback === undefined) {
-    return undefined;
+    return;
   }
   if (
     Platform.OS !== 'ios' &&
@@ -183,10 +183,15 @@ function _buildSeparatedAttributionCallback(
     !harmonyPlatform()
   ) {
     log(`"set${kind}AttributionListener" is not supported on this platform`);
-    return undefined;
+    return;
   }
 
-  return (result: Object) => {
+  const register =
+    kind === 'UA'
+      ? SolarengineAnalysis.setUAAttributionListener
+      : SolarengineAnalysis.setREAttributionListener;
+
+  register((result: Object) => {
     const dictData = result as {
       [key: string]:
         | string
@@ -197,9 +202,7 @@ function _buildSeparatedAttributionCallback(
     const nativeResult =
       Platform.OS === 'android'
         ? (dictData.android_object_wrapper_key as
-            | {
-                [key: string]: string | number | any[];
-              }
+            | { [key: string]: string | number | any[] }
             | undefined)
         : dictData;
     const code = nativeResult?.reactnative_code;
@@ -220,7 +223,7 @@ function _buildSeparatedAttributionCallback(
     } else {
       callback(-1);
     }
-  };
+  });
 }
 
 function _handleDeepLink(deeplink: deeplink | undefined) {
@@ -361,14 +364,8 @@ export function initialize(
   _setReactNativeBridgeVersion();
 
   _handleAttribution(options.attribution);
-  const uaAttribution = _buildSeparatedAttributionCallback(
-    'UA',
-    options.uaAttribution
-  );
-  const reAttribution = _buildSeparatedAttributionCallback(
-    'RE',
-    options.reAttribution
-  );
+  _handleSeparatedAttribution('UA', options.uaAttribution);
+  _handleSeparatedAttribution('RE', options.reAttribution);
   _handleDeepLink(options.deeplink);
   _handleDeferredDeeplink(options.deferredDeeplink);
 
@@ -382,9 +379,7 @@ export function initialize(
     appKey,
     options.config || {},
     options.remoteConfig || {},
-    options.customDomain || {},
-    uaAttribution,
-    reAttribution
+    options.customDomain || {}
   );
 }
 
