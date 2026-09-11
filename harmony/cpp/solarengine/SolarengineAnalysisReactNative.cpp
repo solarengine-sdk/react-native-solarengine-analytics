@@ -8,7 +8,7 @@ SolarengineAnalysisReactNative::SolarengineAnalysisReactNative(const ArkTSTurboM
     : ArkTSTurboModule(ctx, name) {
     methodMap_ = {
         ARK_METHOD_METADATA(preInit, 1),
-        ARK_METHOD_METADATA(initialize, 6),
+        ARK_METHOD_METADATA(initialize, 4),
         ARK_METHOD_METADATA(setReactNativeBridgeVersion, 1),
         ARK_METHOD_METADATA(multiply, 2),
 
