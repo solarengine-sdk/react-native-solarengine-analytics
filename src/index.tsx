@@ -173,7 +173,7 @@ function _handleAttribution(attribution: attribution | undefined) {
 function _buildSeparatedAttributionCallback(
   kind: 'UA' | 'RE',
   callback: attribution | undefined
-): ((code: number, attributionData?: Object) => void) | undefined {
+): ((result: Object) => void) | undefined {
   if (callback === undefined) {
     return undefined;
   }
@@ -186,7 +186,30 @@ function _buildSeparatedAttributionCallback(
     return undefined;
   }
 
-  return (code: number, attributionData?: Object) => {
+  return (result: Object) => {
+    const dictData = result as {
+      [key: string]:
+        | string
+        | number
+        | any[]
+        | { [key: string]: string | number | any[] };
+    };
+    const nativeResult =
+      Platform.OS === 'android'
+        ? (dictData.android_object_wrapper_key as
+            | {
+                [key: string]: string | number | any[];
+              }
+            | undefined)
+        : dictData;
+    const code = nativeResult?.reactnative_code;
+    const attributionData = nativeResult?.reactnative_data;
+
+    if (typeof code !== 'number') {
+      callback(-1);
+      return;
+    }
+
     if (code !== 0) {
       callback(code);
       return;

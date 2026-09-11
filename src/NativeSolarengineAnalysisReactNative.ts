@@ -11,8 +11,8 @@ export interface Spec extends TurboModule {
     config: Object,
     remoteConfig: Object,
     customDomain: Object,
-    uaAttribution?: (code: number, attributionData?: Object) => void,
-    reAttribution?: (code: number, attributionData?: Object) => void
+    uaAttribution?: (result: Object) => void,
+    reAttribution?: (result: Object) => void
   ): void;
   setReactNativeBridgeVersion(version: string): void;
   registerInitiateComplete(callback: (code: number) => void): void;

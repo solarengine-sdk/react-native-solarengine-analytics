@@ -113,6 +113,53 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
   }
 
+  private fun setUAAttributionCallback(callback: Callback?) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.uaAttribution = callback
+    }
+  }
+
+  private fun takeUAAttributionCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.uaAttribution
+      singleton.uaAttribution = null
+      callback
+    }
+  }
+
+  private fun setREAttributionCallback(callback: Callback?) {
+    val singleton = SolarEngineSingleton.getInstance()
+    synchronized(singleton) {
+      singleton.reAttribution = callback
+    }
+  }
+
+  private fun takeREAttributionCallback(): Callback? {
+    val singleton = SolarEngineSingleton.getInstance()
+    return synchronized(singleton) {
+      val callback = singleton.reAttribution
+      singleton.reAttribution = null
+      callback
+    }
+  }
+
+  private fun invokeSeparatedAttributionCallback(
+    callback: Callback,
+    code: Int,
+    attributionData: WritableMap?
+  ) {
+    val readableMap = Arguments.createMap()
+    val readableValueMap = Arguments.createMap()
+    readableValueMap.putInt("reactnative_code", code)
+    if (attributionData != null) {
+      readableValueMap.putMap("reactnative_data", attributionData)
+    }
+    readableMap.putMap("android_object_wrapper_key", readableValueMap)
+    callback.invoke(readableMap)
+  }
+
   private fun setDeeplinkCallback(callback: Callback) {
     val singleton = SolarEngineSingleton.getInstance()
     synchronized(singleton) {
@@ -310,6 +357,10 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
       val myException = RuntimeException("Invalid Params: $message")
       throw myException
     }
+
+    setUAAttributionCallback(uaAttribution)
+    setREAttributionCallback(reAttribution)
+
     val context = reactApplicationContext
 
     val seConfig = SolarEngineConfig.Builder()
@@ -505,39 +556,69 @@ class SolarengineAnalysisReactNativeModule(reactContext: ReactApplicationContext
     }
     // enableODID / enableAAID are Harmony-only; Android 1.3.2 SolarEngineConfig.Builder has no such methods.
     val solarEngineConfig:SolarEngineConfig = seConfig.build()
-    uaAttribution?.let { callback ->
+    if (uaAttribution != null) {
       solarEngineConfig.setUAAttributionListener(object : OnAttributionListener {
         override fun onAttributionSuccess(attribution: JSONObject) {
           log("attribution: $attribution", "onUAAttributionSuccess")
-          try {
-            callback.invoke(0, SolarEngineRNUtils.convertJsonToMap(attribution))
+          val callback = takeUAAttributionCallback()
+          if (callback == null) {
+            log("skip repeated UA attribution callback", "onUAAttributionSuccess")
+            return
+          }
+          val payload = try {
+            SolarEngineRNUtils.convertJsonToMap(attribution)
           } catch (e: Exception) {
             error("failed to convert UA attribution: ${e.message}", "onUAAttributionSuccess")
-            callback.invoke(-1, null)
+            null
           }
+          invokeSeparatedAttributionCallback(
+            callback,
+            if (payload == null) -1 else 0,
+            payload
+          )
         }
 
         override fun onAttributionFail(errorCode: Int) {
           error("errorCode: $errorCode", "onUAAttributionFail")
-          callback.invoke(errorCode, null)
+          val callback = takeUAAttributionCallback()
+          if (callback == null) {
+            log("skip repeated UA attribution callback", "onUAAttributionFail")
+            return
+          }
+          invokeSeparatedAttributionCallback(callback, errorCode, null)
         }
       })
     }
-    reAttribution?.let { callback ->
+    if (reAttribution != null) {
       solarEngineConfig.setREAttributionListener(object : OnAttributionListener {
         override fun onAttributionSuccess(attribution: JSONObject) {
           log("attribution: $attribution", "onREAttributionSuccess")
-          try {
-            callback.invoke(0, SolarEngineRNUtils.convertJsonToMap(attribution))
+          val callback = takeREAttributionCallback()
+          if (callback == null) {
+            log("skip repeated RE attribution callback", "onREAttributionSuccess")
+            return
+          }
+          val payload = try {
+            SolarEngineRNUtils.convertJsonToMap(attribution)
           } catch (e: Exception) {
             error("failed to convert RE attribution: ${e.message}", "onREAttributionSuccess")
-            callback.invoke(-1, null)
+            null
           }
+          invokeSeparatedAttributionCallback(
+            callback,
+            if (payload == null) -1 else 0,
+            payload
+          )
         }
 
         override fun onAttributionFail(errorCode: Int) {
           error("errorCode: $errorCode", "onREAttributionFail")
-          callback.invoke(errorCode, null)
+          val callback = takeREAttributionCallback()
+          if (callback == null) {
+            log("skip repeated RE attribution callback", "onREAttributionFail")
+            return
+          }
+          invokeSeparatedAttributionCallback(callback, errorCode, null)
         }
       })
     }

@@ -275,8 +275,8 @@ export class SolarengineAnalysisReactNative extends TurboModule {
     config: object,
     rcConfig: object,
     customDomain: object,
-    uaAttribution?: (code: number, attributionData?: Object) => void,
-    reAttribution?: (code: number, attributionData?: Object) => void
+    uaAttribution?: (result: Object) => void,
+    reAttribution?: (result: Object) => void
   ) {
     if (_log) {
       console.log(`${_SolarEngineLog} initialize config:${JSON.stringify(config)} \n rcConfig: ${JSON.stringify(rcConfig)}`);
@@ -393,11 +393,18 @@ export class SolarengineAnalysisReactNative extends TurboModule {
         const attributionListener: AttributionListener = {
           onAttributionSuccess: (attribution: Record<string, Object>) => {
             logInfo(`${_SolarEngineLog} UA attribution success`);
-            uaAttribution(0, attribution);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: 0,
+              reactnative_data: attribution
+            };
+            uaAttribution(result);
           },
           onAttributionFailed: (errorCode: number) => {
             logError(`${_SolarEngineLog} UA attribution failed code=${errorCode}`);
-            uaAttribution(errorCode);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: errorCode
+            };
+            uaAttribution(result);
           }
         };
         SolarEngineManager.setUAAttributionListener(attributionListener);
@@ -406,11 +413,18 @@ export class SolarengineAnalysisReactNative extends TurboModule {
         const attributionListener: AttributionListener = {
           onAttributionSuccess: (attribution: Record<string, Object>) => {
             logInfo(`${_SolarEngineLog} RE attribution success`);
-            reAttribution(0, attribution);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: 0,
+              reactnative_data: attribution
+            };
+            reAttribution(result);
           },
           onAttributionFailed: (errorCode: number) => {
             logError(`${_SolarEngineLog} RE attribution failed code=${errorCode}`);
-            reAttribution(errorCode);
+            const result: SolarEngineNativeResult = {
+              reactnative_code: errorCode
+            };
+            reAttribution(result);
           }
         };
         SolarEngineManager.setREAttributionListener(attributionListener);

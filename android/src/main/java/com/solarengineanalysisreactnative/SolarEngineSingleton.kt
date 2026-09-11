@@ -19,6 +19,8 @@ class SolarEngineSingleton {
   var deferredDeeplink:Callback? = null
   var deeplink:Callback? = null
   var attribution:Callback? = null
+  var uaAttribution:Callback? = null
+  var reAttribution:Callback? = null
 
   fun enableRemoteConfig(): Boolean {
     var enable = BuildConfig.ENABLE_REMOTECONFIG

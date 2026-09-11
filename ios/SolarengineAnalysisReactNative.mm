@@ -23,9 +23,15 @@
 
 @interface SolarengineAnalysisReactNative ()
 @property (nonatomic, assign) BOOL hasDeliveredInitializeCallback;
+@property (nonatomic, copy, nullable) RCTResponseSenderBlock attributionCallback;
+@property (nonatomic, copy, nullable) RCTResponseSenderBlock uaAttributionCallback;
+@property (nonatomic, copy, nullable) RCTResponseSenderBlock reAttributionCallback;
 @end
 
 @implementation SolarengineAnalysisReactNative
+@synthesize attributionCallback = _attributionCallback;
+@synthesize uaAttributionCallback = _uaAttributionCallback;
+@synthesize reAttributionCallback = _reAttributionCallback;
 RCT_EXPORT_MODULE()
 
 
@@ -37,6 +43,59 @@ static NSString *SEValidEventAlias(NSString *eventAlias) {
   }
 
   return eventAlias;
+}
+
+- (void)setUAAttributionCallback:(RCTResponseSenderBlock)callback {
+  @synchronized (self) {
+    _uaAttributionCallback = [callback copy];
+  }
+}
+
+- (void)setAttributionCallback:(RCTResponseSenderBlock)callback {
+  @synchronized (self) {
+    _attributionCallback = [callback copy];
+  }
+}
+
+- (RCTResponseSenderBlock)takeAttributionCallback {
+  @synchronized (self) {
+    RCTResponseSenderBlock callback = _attributionCallback;
+    _attributionCallback = nil;
+    return callback;
+  }
+}
+
+- (RCTResponseSenderBlock)takeUAAttributionCallback {
+  @synchronized (self) {
+    RCTResponseSenderBlock callback = _uaAttributionCallback;
+    _uaAttributionCallback = nil;
+    return callback;
+  }
+}
+
+- (void)setREAttributionCallback:(RCTResponseSenderBlock)callback {
+  @synchronized (self) {
+    _reAttributionCallback = [callback copy];
+  }
+}
+
+- (RCTResponseSenderBlock)takeREAttributionCallback {
+  @synchronized (self) {
+    RCTResponseSenderBlock callback = _reAttributionCallback;
+    _reAttributionCallback = nil;
+    return callback;
+  }
+}
+
+- (void)invokeSeparatedAttributionCallback:(RCTResponseSenderBlock)callback
+                                      code:(int)code
+                           attributionData:(NSDictionary *)attributionData {
+  NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+  [result setObject:@(code) forKey:@"reactnative_code"];
+  if (attributionData != nil) {
+    [result setObject:attributionData forKey:@"reactnative_data"];
+  }
+  callback(@[result]);
 }
 
 
@@ -149,6 +208,11 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
                                 nil];
     @throw myException;
   }
+
+  [self setUAAttributionCallback:uaAttribution];
+  [self setREAttributionCallback:reAttribution];
+
+  __weak SolarengineAnalysisReactNative *weakSelf = self;
 
   SEConfig *seconfig = [[SEConfig alloc] init];
   
@@ -329,12 +393,34 @@ RCT_EXPORT_METHOD(preInit:(NSString *)appKey) {
 
   if (uaAttribution != nil) {
     [[SolarEngineSDK sharedInstance] setUAAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
-      uaAttribution(@[@(code), attributionData ?: [NSNull null]]);
+      SolarengineAnalysisReactNative *strongSelf = weakSelf;
+      if (strongSelf == nil) {
+        return;
+      }
+      RCTResponseSenderBlock callback = [strongSelf takeUAAttributionCallback];
+      if (callback == nil) {
+        [SolarengineAnalysisReactNative log:@"skip repeated UA attribution callback" method:_cmd];
+        return;
+      }
+      [strongSelf invokeSeparatedAttributionCallback:callback
+                                                 code:code
+                                      attributionData:attributionData];
     }];
   }
   if (reAttribution != nil) {
     [[SolarEngineSDK sharedInstance] setREAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
-      reAttribution(@[@(code), attributionData ?: [NSNull null]]);
+      SolarengineAnalysisReactNative *strongSelf = weakSelf;
+      if (strongSelf == nil) {
+        return;
+      }
+      RCTResponseSenderBlock callback = [strongSelf takeREAttributionCallback];
+      if (callback == nil) {
+        [SolarengineAnalysisReactNative log:@"skip repeated RE attribution callback" method:_cmd];
+        return;
+      }
+      [strongSelf invokeSeparatedAttributionCallback:callback
+                                                 code:code
+                                      attributionData:attributionData];
     }];
   }
 
@@ -412,18 +498,28 @@ RCT_EXPORT_METHOD(registerInitiateComplete:(RCTResponseSenderBlock)callback) {
 - (void)_registerAttribution:(RCTResponseSenderBlock)callback {
   [SolarengineAnalysisReactNative log:@"invoked" method:_cmd];
   if(callback == nil) return;
+  [self setAttributionCallback:callback];
+  __weak SolarengineAnalysisReactNative *weakSelf = self;
   [[SolarEngineSDK sharedInstance] setAttributionCallback:^(int code, NSDictionary * _Nullable attributionData) {
+    SolarengineAnalysisReactNative *strongSelf = weakSelf;
+    if (strongSelf == nil) {
+      return;
+    }
     NSString *log = [NSString stringWithFormat:@"attribution code: %d",code];
     [SolarengineAnalysisReactNative log:log method:_cmd];
+
+    RCTResponseSenderBlock attributionCallback = [strongSelf takeAttributionCallback];
+    if (attributionCallback == nil) {
+      [SolarengineAnalysisReactNative log:@"skip repeated attribution callback" method:_cmd];
+      return;
+    }
     
     NSMutableDictionary *result = [[NSMutableDictionary alloc]init];
     if (attributionData) {
       [result setObject:attributionData forKey:@"reactnative_data"];
     }
     [result setObject:@(code) forKey:@"reactnative_code"];
-    if(callback) {
-      callback(@[result]);
-    }
+    attributionCallback(@[result]);
   }];
 }
 
